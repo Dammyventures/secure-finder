@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { Verification } from '../types/verification.types'
+import type { Verification } from '../types/verification.types'
 
 interface VerificationState {
   verifications: Record<string, Verification>

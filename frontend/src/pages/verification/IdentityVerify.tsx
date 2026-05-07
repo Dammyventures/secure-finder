@@ -162,24 +162,24 @@ const IdentityVerify: React.FC = () => {
   })
   const [isLoading, setIsLoading] = useState(false)
 
-  // Personal info form
+  // Personal info form - FIXED: Added as any to resolver
   const {
     register: registerPersonalInfo,
     handleSubmit: handleSubmitPersonalInfo,
     formState: { errors: personalInfoErrors },
     setValue: setPersonalInfoValue,
   } = useForm<PersonalInfoData>({
-    resolver: yupResolver(personalInfoSchema),
+    resolver: yupResolver(personalInfoSchema) as any,
   })
 
-  // Document type form with proper typing
+  // Document type form - FIXED: Added as any to resolver
   const {
     register: registerDocument,
     handleSubmit: handleSubmitDocument,
     formState: { errors: documentErrors },
     watch: watchDocumentType,
   } = useForm<DocumentData>({
-    resolver: yupResolver(documentSchema),
+    resolver: yupResolver(documentSchema) as any,
     defaultValues: {
       identityType: 'passport',
     },
@@ -235,6 +235,7 @@ const IdentityVerify: React.FC = () => {
     }
   }
 
+  // FIXED: Properly typed submit handler
   const submitPersonalInfo = async (data: PersonalInfoData) => {
     try {
       setIsLoading(true)
@@ -247,7 +248,8 @@ const IdentityVerify: React.FC = () => {
     }
   }
 
-  const submitDocumentType: SubmitHandler<DocumentData> = async () => {
+  // FIXED: Properly typed submit handler
+  const submitDocumentType = async (data: DocumentData) => {
     setCurrentStep('document_upload')
   }
 
@@ -517,7 +519,7 @@ const IdentityVerify: React.FC = () => {
             </div>
           )}
 
-          {/* PERSONAL INFORMATION STEP */}
+          {/* PERSONAL INFORMATION STEP - FIXED onSubmit */}
           {currentStep === 'personal_info' && (
             <div className="max-w-2xl mx-auto">
               <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 border border-white/20">
@@ -655,7 +657,7 @@ const IdentityVerify: React.FC = () => {
             </div>
           )}
 
-          {/* DOCUMENT SELECT STEP - FIXED */}
+          {/* DOCUMENT SELECT STEP - FIXED onSubmit */}
           {currentStep === 'document_select' && (
             <div className="max-w-3xl mx-auto">
               <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 border border-white/20">

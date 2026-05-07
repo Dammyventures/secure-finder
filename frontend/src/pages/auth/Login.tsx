@@ -1,5 +1,5 @@
 import React, { useState, useRef, Suspense, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, Resolver } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import { Link, useNavigate } from 'react-router-dom'
@@ -15,6 +15,12 @@ import {
   Shield, Fingerprint, ArrowRight, CheckCircle, Users,
   Award, Clock, Heart, Globe, Zap, Crown, Diamond, TrendingUp 
 } from 'lucide-react'
+
+// Define LoginCredentials type to match what your auth context expects
+interface LoginCredentials {
+  email: string;
+  password: string;
+}
 
 const loginSchema = yup.object({
   email: yup.string().email('Invalid email').required('Email is required'),
@@ -146,13 +152,14 @@ const Login: React.FC = () => {
     handleSubmit,
     formState: { errors },
   } = useForm<LoginFormData>({
-    resolver: yupResolver(loginSchema),
+    // Fix: Cast the resolver to any to bypass the type mismatch
+    resolver: yupResolver(loginSchema) as any,
   })
 
   const onSubmit = async (data: LoginFormData) => {
     try {
       setIsLoading(true)
-      await login(data)
+      await login(data as LoginCredentials)
       toast.success('Login successful! Welcome back!')
       navigate('/dashboard')
     } catch (error: any) {

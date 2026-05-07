@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { Item, ItemFilters } from '../types/item.types'
+import type { Item, ItemFilters } from '../types/item.types'
 
 interface ItemState {
   items: Record<string, Item>

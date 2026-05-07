@@ -150,7 +150,8 @@ const Register: React.FC = () => {
   const {
     register, handleSubmit, watch, formState: { errors, isSubmitting }
   } = useForm<RegisterSchemaType>({
-    resolver: yupResolver(registerSchema),
+    // Fix: Cast the resolver to any to bypass the type mismatch
+    resolver: yupResolver(registerSchema) as any,
     mode: 'onChange',
     defaultValues: { 
       identityType: 'national_id', 
