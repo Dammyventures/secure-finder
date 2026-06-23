@@ -27,7 +27,7 @@ import { useNotifications } from '../../../contexts/NotificationContext'
 import Button from '../UI/Button'
 import Input from '../UI/Input'
 
-// ========== 3D BACKGROUND FOR HEADER ==========
+// ========== 3D BACKGROUND FOR HEADER - UPDATED COLORS ==========
 const Header3DEffect: React.FC = () => {
   const groupRef = useRef<any>(null)
   
@@ -42,12 +42,12 @@ const Header3DEffect: React.FC = () => {
       <Float speed={0.8} rotationIntensity={0.3} floatIntensity={0.5} position={[-2, -1, -5]}>
         <Sphere args={[0.3, 32, 32]}>
           <MeshDistortMaterial 
-            color="#8b5cf6"
+            color="#1C448E"
             distort={0.3}
             speed={1}
             roughness={0.2}
             metalness={0.85}
-            emissive="#4b0082"
+            emissive="#0F2A5E"
             emissiveIntensity={0.5}
           />
         </Sphere>
@@ -56,23 +56,23 @@ const Header3DEffect: React.FC = () => {
       <Float speed={1} rotationIntensity={0.4} floatIntensity={0.6} position={[2.5, -0.5, -4]}>
         <Sphere args={[0.25, 32, 32]}>
           <MeshDistortMaterial 
-            color="#E5E4E2"
+            color="#F4FDFF"
             distort={0.4}
             speed={1.2}
             roughness={0.15}
             metalness={0.9}
-            emissive="#c4b5fd"
+            emissive="#938BA1"
             emissiveIntensity={0.4}
           />
         </Sphere>
       </Float>
       
-      <ThreeSparkles count={50} scale={[5, 5, 5]} size={0.04} speed={0.3} color="#E5E4E2" />
+      <ThreeSparkles count={50} scale={[5, 5, 5]} size={0.04} speed={0.3} color="#F4FDFF" />
     </group>
   )
 }
 
-// ========== HEADER COMPONENT ==========
+// ========== HEADER COMPONENT - REFRESHED ==========
 const Header: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth()
   const { toggleSidebar, sidebarOpen } = useUIStore()
@@ -144,9 +144,9 @@ const Header: React.FC = () => {
         transition={{ duration: 0.6, type: "spring" }}
         className={`sticky top-0 z-50 transition-all duration-300 ${
           scrolled 
-            ? 'bg-gradient-to-r from-[#4b0082]/95 via-[#6d28d9]/95 to-[#4b0082]/95 backdrop-blur-xl shadow-2xl' 
-            : 'bg-gradient-to-r from-[#4b0082] via-[#6d28d9] to-[#4b0082]'
-        } border-b border-white/10`}
+            ? 'bg-[#1C448E]/95 backdrop-blur-xl shadow-2xl' 
+            : 'bg-gradient-to-r from-[#1C448E] via-[#0F2A5E] to-[#1C448E]'
+        } border-b border-[#F4FDFF]/10`}
       >
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
@@ -156,7 +156,7 @@ const Header: React.FC = () => {
                 whileHover={{ scale: 1.05, rotate: 180 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={toggleSidebar}
-                className="p-2 rounded-md text-white/70 hover:text-white hover:bg-white/10 lg:hidden transition-all duration-300"
+                className="p-2 rounded-md text-[#F4FDFF]/70 hover:text-[#F4FDFF] hover:bg-[#F4FDFF]/10 lg:hidden transition-all duration-300"
               >
                 {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
               </motion.button>
@@ -170,15 +170,15 @@ const Header: React.FC = () => {
                     animate={{ rotate: [0, 10, -10, 0] }}
                     transition={{ duration: 0.5, delay: 0.5 }}
                   >
-                    <Shield className="text-[#E5E4E2]" size={28} />
+                    <Shield className="text-[#F4FDFF]" size={28} />
                   </motion.div>
                   <div className="hidden sm:block">
-                    <span className="text-xl font-bold bg-gradient-to-r from-[#E5E4E2] to-[#c4b5fd] bg-clip-text text-transparent">
+                    <span className="text-xl font-bold bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] bg-clip-text text-transparent">
                       Secure
                     </span>
-                    <span className="text-xl font-bold text-[#E5E4E2]">Finder</span>
+                    <span className="text-xl font-bold text-[#F4FDFF]">Finder</span>
                   </div>
-                  <Crown className="w-4 h-4 text-yellow-400 animate-pulse" />
+                  <Crown className="w-4 h-4 text-[#938BA1] animate-pulse" />
                 </Link>
               </motion.div>
               
@@ -193,7 +193,7 @@ const Header: React.FC = () => {
                   >
                     <Link
                       to={item.path}
-                      className="text-white/80 hover:text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:bg-white/10 flex items-center gap-2 group"
+                      className="text-[#F4FDFF]/80 hover:text-[#F4FDFF] px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:bg-[#F4FDFF]/10 flex items-center gap-2 group"
                     >
                       <item.icon size={16} className="group-hover:scale-110 transition-transform" />
                       {item.name}
@@ -225,7 +225,7 @@ const Header: React.FC = () => {
                     isSearch
                     size="sm"
                     fullWidth
-                    className="bg-white/10 border-white/20 text-white placeholder-white/50 focus:border-[#E5E4E2] focus:ring-[#E5E4E2]/20"
+                    className="bg-[#F4FDFF]/10 border-[#F4FDFF]/20 text-[#F4FDFF] placeholder-[#F4FDFF]/50 focus:border-[#F4FDFF] focus:ring-[#F4FDFF]/20"
                   />
                 </motion.div>
                 <AnimatePresence>
@@ -234,9 +234,9 @@ const Header: React.FC = () => {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 10 }}
-                      className="absolute top-full left-0 right-0 mt-2 bg-white/10 backdrop-blur-xl rounded-xl p-2 border border-white/20 z-50"
+                      className="absolute top-full left-0 right-0 mt-2 bg-[#1C448E]/90 backdrop-blur-xl rounded-xl p-2 border border-[#F4FDFF]/20 z-50"
                     >
-                      <div className="text-xs text-white/60 p-2">Popular searches: lost keys, wallet, phone</div>
+                      <div className="text-xs text-[#F4FDFF]/60 p-2">Popular searches: lost keys, wallet, phone</div>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -251,14 +251,14 @@ const Header: React.FC = () => {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setShowNotifications(!showNotifications)}
-                  className="p-2 rounded-full text-white/70 hover:text-white hover:bg-white/10 relative transition-all duration-300"
+                  className="p-2 rounded-full text-[#F4FDFF]/70 hover:text-[#F4FDFF] hover:bg-[#F4FDFF]/10 relative transition-all duration-300"
                 >
                   <Bell size={20} />
                   {unreadCount > 0 && (
                     <motion.span 
                       initial={{ scale: 0 }}
                       animate={{ scale: 1 }}
-                      className="absolute top-1 right-1 w-2.5 h-2.5 bg-gradient-to-r from-red-500 to-pink-500 rounded-full"
+                      className="absolute top-1 right-1 w-2.5 h-2.5 bg-gradient-to-r from-[#1C448E] to-[#938BA1] rounded-full"
                     />
                   )}
                 </motion.button>
@@ -271,16 +271,16 @@ const Header: React.FC = () => {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
                       transition={{ duration: 0.2 }}
-                      className="absolute right-0 mt-2 w-80 bg-gradient-to-br from-[#4b0082] to-[#6d28d9] backdrop-blur-xl rounded-xl shadow-2xl border border-white/20 z-50"
+                      className="absolute right-0 mt-2 w-80 bg-gradient-to-br from-[#1C448E] to-[#0F2A5E] backdrop-blur-xl rounded-xl shadow-2xl border border-[#F4FDFF]/20 z-50"
                     >
-                      <div className="p-4 border-b border-white/20">
+                      <div className="p-4 border-b border-[#F4FDFF]/20">
                         <div className="flex items-center justify-between">
-                          <h3 className="font-semibold text-white">Notifications</h3>
+                          <h3 className="font-semibold text-[#F4FDFF]">Notifications</h3>
                           {unreadCount > 0 && (
                             <motion.button
                               whileHover={{ scale: 1.02 }}
                               onClick={markAllAsRead}
-                              className="text-xs text-[#E5E4E2] hover:text-white transition-colors"
+                              className="text-xs text-[#938BA1] hover:text-[#F4FDFF] transition-colors"
                             >
                               Mark all as read
                             </motion.button>
@@ -290,7 +290,7 @@ const Header: React.FC = () => {
                       
                       <div className="max-h-96 overflow-y-auto">
                         {notifications.length === 0 ? (
-                          <div className="p-4 text-center text-white/50 text-sm">
+                          <div className="p-4 text-center text-[#F4FDFF]/50 text-sm">
                             No notifications
                           </div>
                         ) : (
@@ -300,23 +300,23 @@ const Header: React.FC = () => {
                               initial={{ opacity: 0, x: -20 }}
                               animate={{ opacity: 1, x: 0 }}
                               transition={{ delay: idx * 0.05 }}
-                              className={`p-4 border-b border-white/10 hover:bg-white/5 cursor-pointer transition-all duration-300 ${
-                                !notification.read ? 'bg-white/5' : ''
+                              className={`p-4 border-b border-[#F4FDFF]/10 hover:bg-[#F4FDFF]/5 cursor-pointer transition-all duration-300 ${
+                                !notification.read ? 'bg-[#F4FDFF]/5' : ''
                               }`}
                             >
                               <div className="flex items-start space-x-3">
                                 <div className={`p-2 rounded-full ${
-                                  notification.type === 'success' ? 'bg-green-500/20 text-green-400' :
+                                  notification.type === 'success' ? 'bg-[#938BA1]/20 text-[#938BA1]' :
                                   notification.type === 'error' ? 'bg-red-500/20 text-red-400' :
-                                  'bg-blue-500/20 text-blue-400'
+                                  'bg-[#1C448E]/20 text-[#1C448E]'
                                 }`}>
                                   {notification.type === 'success' ? '✓' :
                                    notification.type === 'error' ? '✗' : 'ℹ'}
                                 </div>
                                 <div className="flex-1">
-                                  <p className="font-medium text-white text-sm">{notification.title}</p>
-                                  <p className="text-xs text-white/60 mt-1">{notification.message}</p>
-                                  <p className="text-xs text-white/40 mt-2">
+                                  <p className="font-medium text-[#F4FDFF] text-sm">{notification.title}</p>
+                                  <p className="text-xs text-[#F4FDFF]/60 mt-1">{notification.message}</p>
+                                  <p className="text-xs text-[#F4FDFF]/40 mt-2">
                                     {new Date(notification.timestamp).toLocaleTimeString()}
                                   </p>
                                 </div>
@@ -327,10 +327,10 @@ const Header: React.FC = () => {
                       </div>
                       
                       {notifications.length > 5 && (
-                        <div className="p-4 border-t border-white/20 text-center">
+                        <div className="p-4 border-t border-[#F4FDFF]/20 text-center">
                           <Link
                             to="/notifications"
-                            className="text-xs text-[#E5E4E2] hover:text-white transition-colors"
+                            className="text-xs text-[#938BA1] hover:text-[#F4FDFF] transition-colors"
                           >
                             View all notifications
                           </Link>
@@ -348,22 +348,22 @@ const Header: React.FC = () => {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setShowUserMenu(!showUserMenu)}
-                    className="flex items-center space-x-2 p-1.5 rounded-full hover:bg-white/10 transition-all duration-300"
+                    className="flex items-center space-x-2 p-1.5 rounded-full hover:bg-[#F4FDFF]/10 transition-all duration-300"
                   >
                     {hasProfileImage() ? (
                       <img
                         src={(user as any).profileImage}
                         alt={user.fullName || 'User'}
-                        className="w-8 h-8 rounded-full object-cover border-2 border-[#E5E4E2]"
+                        className="w-8 h-8 rounded-full object-cover border-2 border-[#F4FDFF]"
                       />
                     ) : (
-                      <div className="w-8 h-8 bg-gradient-to-r from-[#E5E4E2] to-[#c4b5fd] rounded-full flex items-center justify-center">
-                        <span className="text-[#4b0082] font-bold text-sm">
+                      <div className="w-8 h-8 bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] rounded-full flex items-center justify-center">
+                        <span className="text-[#1C448E] font-bold text-sm">
                           {getUserInitials()}
                         </span>
                       </div>
                     )}
-                    <ChevronDown size={14} className="text-white/70" />
+                    <ChevronDown size={14} className="text-[#F4FDFF]/70" />
                   </motion.button>
                   
                   {/* User dropdown menu */}
@@ -374,12 +374,12 @@ const Header: React.FC = () => {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
                         transition={{ duration: 0.2 }}
-                        className="absolute right-0 mt-2 w-56 bg-gradient-to-br from-[#4b0082] to-[#6d28d9] backdrop-blur-xl rounded-xl shadow-2xl border border-white/20 z-50"
+                        className="absolute right-0 mt-2 w-56 bg-gradient-to-br from-[#1C448E] to-[#0F2A5E] backdrop-blur-xl rounded-xl shadow-2xl border border-[#F4FDFF]/20 z-50"
                       >
                         <div className="p-2">
-                          <div className="px-4 py-3 border-b border-white/20 mb-2">
-                            <p className="text-white font-semibold text-sm">{user.fullName || 'User'}</p>
-                            <p className="text-white/50 text-xs mt-1">{user.email}</p>
+                          <div className="px-4 py-3 border-b border-[#F4FDFF]/20 mb-2">
+                            <p className="text-[#F4FDFF] font-semibold text-sm">{user.fullName || 'User'}</p>
+                            <p className="text-[#F4FDFF]/50 text-xs mt-1">{user.email}</p>
                           </div>
                           <motion.button
                             whileHover={{ x: 5 }}
@@ -387,7 +387,7 @@ const Header: React.FC = () => {
                               navigate('/profile')
                               setShowUserMenu(false)
                             }}
-                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300"
+                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[#F4FDFF]/80 hover:text-[#F4FDFF] hover:bg-[#F4FDFF]/10 rounded-lg transition-all duration-300"
                           >
                             <UserCircle size={16} />
                             Profile
@@ -398,7 +398,7 @@ const Header: React.FC = () => {
                               navigate('/dashboard')
                               setShowUserMenu(false)
                             }}
-                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300"
+                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[#F4FDFF]/80 hover:text-[#F4FDFF] hover:bg-[#F4FDFF]/10 rounded-lg transition-all duration-300"
                           >
                             <LayoutDashboard size={16} />
                             Dashboard
@@ -409,16 +409,16 @@ const Header: React.FC = () => {
                               navigate('/settings')
                               setShowUserMenu(false)
                             }}
-                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-300"
+                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[#F4FDFF]/80 hover:text-[#F4FDFF] hover:bg-[#F4FDFF]/10 rounded-lg transition-all duration-300"
                           >
                             <Settings size={16} />
                             Settings
                           </motion.button>
-                          <hr className="my-2 border-white/20" />
+                          <hr className="my-2 border-[#F4FDFF]/20" />
                           <motion.button
                             whileHover={{ x: 5 }}
                             onClick={handleLogout}
-                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-all duration-300"
+                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[#938BA1] hover:text-[#F4FDFF] hover:bg-[#F4FDFF]/10 rounded-lg transition-all duration-300"
                           >
                             <LogOut size={16} />
                             Logout
@@ -438,7 +438,7 @@ const Header: React.FC = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => navigate('/login')}
-                    className="border-white/30 text-white hover:bg-white/10 hover:border-white/50"
+                    className="border-[#F4FDFF]/30 text-[#F4FDFF] hover:bg-[#F4FDFF]/10 hover:border-[#F4FDFF]/50"
                   >
                     Login
                   </Button>
@@ -446,7 +446,7 @@ const Header: React.FC = () => {
                     variant="primary"
                     size="sm"
                     onClick={() => navigate('/register')}
-                    className="bg-gradient-to-r from-[#E5E4E2] to-[#c4b5fd] text-[#4b0082] hover:shadow-lg"
+                    className="bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] text-[#1C448E] hover:shadow-lg"
                   >
                     Sign Up
                     <Sparkles size={14} className="ml-1" />
@@ -464,7 +464,7 @@ const Header: React.FC = () => {
                   variant="primary"
                   size="sm"
                   onClick={() => navigate('/report/lost')}
-                  className="bg-gradient-to-r from-pink-500 to-rose-500 text-white hover:shadow-lg"
+                  className="bg-gradient-to-r from-[#938BA1] to-[#1C448E] text-[#F4FDFF] hover:shadow-lg"
                 >
                   <PlusCircle size={14} className="mr-1" />
                   Report Item
@@ -476,7 +476,7 @@ const Header: React.FC = () => {
         
         {/* Animated gradient bottom border */}
         <motion.div 
-          className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#E5E4E2] to-transparent"
+          className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#F4FDFF] to-transparent"
           animate={{ opacity: [0.3, 0.6, 0.3] }}
           transition={{ duration: 3, repeat: Infinity }}
         />

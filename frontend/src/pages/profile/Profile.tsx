@@ -36,7 +36,17 @@ import * as yup from 'yup'
 import { format } from 'date-fns'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Canvas, useFrame } from '@react-three/fiber'
-import { Sphere, MeshDistortMaterial, Float, Stars, Sparkles as ThreeSparkles, TorusKnot } from '@react-three/drei'
+import { 
+  Sphere, 
+  MeshDistortMaterial, 
+  Float, 
+  Stars, 
+  Sparkles as ThreeSparkles, 
+  TorusKnot,
+  Points,
+  PointMaterial,
+  Ring
+} from '@react-three/drei'
 import { toast } from 'react-hot-toast'
 
 import Button from '../../components/common/UI/Button'
@@ -49,61 +59,192 @@ import { useAuth } from '../../contexts/AuthContext'
 import authApi from '../../api/auth.api'
 import type { VerificationRequest, SecurityEvent, RevokeSessionRequest } from '../../types/auth.types'
 
-// ========== 3D BACKGROUND FOR PROFILE PAGE ==========
-const Profile3DBackground: React.FC = () => {
-  const groupRef = useRef<any>(null)
-  
+// ========== ✨ NEW: COSMIC PARTICLE GALAXY FOR PROFILE ==========
+const ProfileParticleGalaxy: React.FC = () => {
+  const pointsRef = useRef<any>(null)
+  const galaxyRef = useRef<any>(null)
+  const [particlePositions] = useState(() => {
+    const positions = new Float32Array(1800 * 3)
+    for (let i = 0; i < 1800; i++) {
+      const radius = 1.5 + Math.random() * 5
+      const theta = Math.random() * Math.PI * 2
+      const phi = Math.acos((Math.random() * 2) - 1)
+      
+      positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta)
+      positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta) * 0.4
+      positions[i * 3 + 2] = radius * Math.cos(phi)
+    }
+    return positions
+  })
+
+  const [colorPositions] = useState(() => {
+    const colors = new Float32Array(1800 * 3)
+    const palette = [
+      [0.956, 0.992, 1.0],   // #F4FDFF
+      [0.11, 0.267, 0.557],   // #1C448E
+      [0.576, 0.545, 0.631],  // #938BA1
+      [0.956, 0.992, 1.0],   // #F4FDFF
+    ]
+    for (let i = 0; i < 1800; i++) {
+      const c = palette[Math.floor(Math.random() * palette.length)]
+      colors[i * 3] = c[0]
+      colors[i * 3 + 1] = c[1]
+      colors[i * 3 + 2] = c[2]
+    }
+    return colors
+  })
+
   useFrame(({ clock }) => {
-    if (groupRef.current) {
-      groupRef.current.rotation.y = clock.getElapsedTime() * 0.03
-      groupRef.current.rotation.x = Math.sin(clock.getElapsedTime() * 0.05) * 0.02
+    const t = clock.getElapsedTime()
+    if (pointsRef.current) {
+      pointsRef.current.rotation.y = t * 0.01
+      pointsRef.current.rotation.x = Math.sin(t * 0.015) * 0.03
+    }
+    if (galaxyRef.current) {
+      galaxyRef.current.rotation.y = t * 0.012
+      galaxyRef.current.rotation.x = Math.sin(t * 0.01) * 0.02
     }
   })
-  
+
+  return (
+    <group ref={galaxyRef}>
+      <Points ref={pointsRef} positions={particlePositions} colors={colorPositions} stride={3}>
+        <PointMaterial
+          transparent
+          opacity={0.5}
+          size={0.025}
+          sizeAttenuation
+          blending={2}
+          depthWrite={false}
+        />
+      </Points>
+
+      <Float speed={1.2} rotationIntensity={0.5} floatIntensity={0.7}>
+        <Sphere args={[0.5, 64, 64]} position={[0, 0, 0]}>
+          <MeshDistortMaterial
+            color="#1C448E"
+            distort={0.15}
+            speed={1.2}
+            roughness={0.05}
+            metalness={0.95}
+            emissive="#938BA1"
+            emissiveIntensity={0.6}
+            transparent
+            opacity={0.5}
+          />
+        </Sphere>
+      </Float>
+
+      <Ring args={[0.8, 1.0, 64]} position={[0, 0, 0]} rotation={[Math.PI / 3, 0.2, 0]}>
+        <meshStandardMaterial
+          color="#F4FDFF"
+          emissive="#1C448E"
+          emissiveIntensity={0.2}
+          metalness={0.9}
+          transparent
+          opacity={0.3}
+        />
+      </Ring>
+
+      {[1, 2].map((i) => {
+        const radius = 1.2 + i * 0.4
+        return (
+          <Float key={i} speed={0.3 + i * 0.1} rotationIntensity={0.2} floatIntensity={0.3}>
+            <Ring
+              args={[radius, radius + 0.03, 80]}
+              position={[0, 0, 0]}
+              rotation={[Math.PI / 2 + i * 0.3, i * 0.3, 0]}
+            >
+              <meshStandardMaterial
+                color={i === 1 ? "#938BA1" : "#1C448E"}
+                emissive={i === 1 ? "#F4FDFF" : "#938BA1"}
+                emissiveIntensity={0.1}
+                metalness={0.8}
+                transparent
+                opacity={0.15}
+                wireframe={i === 2}
+              />
+            </Ring>
+          </Float>
+        )
+      })}
+
+      {[...Array(8)].map((_, i) => {
+        const angle = (i / 8) * Math.PI * 2
+        const radius = 1.5 + Math.random() * 1.5
+        const height = (Math.random() - 0.5) * 2
+        return (
+          <Float
+            key={i + 100}
+            speed={0.4 + Math.random() * 0.3}
+            rotationIntensity={0.8}
+            floatIntensity={0.8}
+            position={[
+              Math.cos(angle + i * 0.3) * radius,
+              height,
+              Math.sin(angle + i * 0.3) * radius
+            ]}
+          >
+            <Sphere args={[0.035 + Math.random() * 0.035, 16, 16]}>
+              <MeshDistortMaterial
+                color={i % 2 === 0 ? "#F4FDFF" : "#938BA1"}
+                distort={0.4}
+                speed={2}
+                metalness={0.9}
+                emissive={i % 2 === 0 ? "#F4FDFF" : "#938BA1"}
+                emissiveIntensity={0.3}
+              />
+            </Sphere>
+          </Float>
+        )
+      })}
+
+      <ThreeSparkles count={250} scale={[10, 10, 10]} size={0.04} speed={0.3} color="#F4FDFF" />
+      <Stars radius={15} depth={50} count={1200} factor={4} fade />
+    </group>
+  )
+}
+
+// ========== 🌊 FLUID AURA BACKGROUND ==========
+const FluidAuraBackground: React.FC = () => {
+  const groupRef = useRef<any>(null)
+
+  useFrame(({ clock }) => {
+    if (groupRef.current) {
+      groupRef.current.position.y = Math.sin(clock.getElapsedTime() * 0.15) * 0.1
+      groupRef.current.rotation.z = Math.sin(clock.getElapsedTime() * 0.06) * 0.015
+    }
+  })
+
   return (
     <group ref={groupRef}>
-      <Float speed={0.8} rotationIntensity={0.5} floatIntensity={0.8} position={[-4, -2, -8]}>
-        <Sphere args={[0.8, 64, 64]}>
-          <MeshDistortMaterial 
-            color="#8b5cf6"
-            distort={0.4}
-            speed={1.5}
-            roughness={0.2}
-            metalness={0.85}
-            emissive="#4b0082"
-            emissiveIntensity={0.5}
-          />
-        </Sphere>
-      </Float>
-      
-      <Float speed={0.6} rotationIntensity={0.4} floatIntensity={0.6} position={[5, 1, -10]}>
-        <Sphere args={[0.6, 64, 64]}>
-          <MeshDistortMaterial 
-            color="#E5E4E2"
-            distort={0.3}
-            speed={1.2}
-            roughness={0.15}
-            metalness={0.9}
-            emissive="#c4b5fd"
-            emissiveIntensity={0.4}
-          />
-        </Sphere>
-      </Float>
-      
-      <TorusKnot args={[3.5, 0.08, 200, 32, 3, 4]} position={[0, -1, -12]}>
-        <MeshDistortMaterial 
-          color="#8b5cf6"
-          emissive="#4b0082"
-          emissiveIntensity={0.3}
-          metalness={0.85}
-          roughness={0.15}
-          transparent
-          opacity={0.4}
-        />
-      </TorusKnot>
-      
-      <ThreeSparkles count={300} scale={[12, 12, 12]} size={0.05} speed={0.3} color="#E5E4E2" />
-      <Stars radius={15} depth={50} count={1500} factor={5} fade />
+      {[...Array(4)].map((_, i) => {
+        const size = 2 + i * 1.8
+        const opacity = 0.025 - i * 0.005
+        return (
+          <Float
+            key={i}
+            speed={0.2 + i * 0.03}
+            rotationIntensity={0.08}
+            floatIntensity={0.2 + i * 0.03}
+            position={[0, -0.3 + i * 0.2, -1.5 - i * 0.4]}
+          >
+            <Sphere args={[size, 32, 32]}>
+              <MeshDistortMaterial
+                color={i % 2 === 0 ? "#1C448E" : "#938BA1"}
+                distort={0.5 + i * 0.06}
+                speed={0.3 + i * 0.03}
+                roughness={0.3}
+                metalness={0.2}
+                transparent
+                opacity={opacity}
+                emissive={i % 2 === 0 ? "#1C448E" : "#938BA1"}
+                emissiveIntensity={0.06}
+              />
+            </Sphere>
+          </Float>
+        )
+      })}
     </group>
   )
 }
@@ -159,14 +300,14 @@ type ProfileFormData = {
 type PasswordFormData = yup.InferType<typeof passwordSchema>
 type NotificationFormData = yup.InferType<typeof notificationSchema>
 
-// Tab Navigation Component
+// Tab Navigation Component - Updated Colors
 const TabNavigation: React.FC<{
   tabs: { id: string; label: string; icon: React.ReactNode }[];
   activeTab: string;
   onChange: (tabId: string) => void;
 }> = ({ tabs, activeTab, onChange }) => {
   return (
-    <div className="border-b border-white/20">
+    <div className="border-b border-[#F4FDFF]/10">
       <nav className="-mb-px flex space-x-8">
         {tabs.map((tab) => (
           <motion.button
@@ -176,8 +317,8 @@ const TabNavigation: React.FC<{
             className={`
               inline-flex items-center py-3 px-1 border-b-2 font-medium text-sm transition-all duration-300
               ${activeTab === tab.id
-                ? 'border-[#E5E4E2] text-[#E5E4E2]'
-                : 'border-transparent text-white/50 hover:text-white/70 hover:border-white/20'
+                ? 'border-[#F4FDFF] text-[#F4FDFF]'
+                : 'border-transparent text-[#F4FDFF]/40 hover:text-[#F4FDFF]/70 hover:border-[#F4FDFF]/20'
               }
             `}
           >
@@ -232,16 +373,16 @@ const FileUpload: React.FC<{
   );
 };
 
-// Verification Badge Component
+// Verification Badge Component - Updated Colors
 const VerificationBadge: React.FC<{
   level: string;
   verified: boolean;
 }> = ({ level, verified }) => {
   const getBadgeColor = () => {
-    if (!verified) return 'from-gray-500 to-gray-600';
-    if (level === 'basic') return 'from-blue-500 to-cyan-500';
-    if (level === 'advanced') return 'from-green-500 to-emerald-500';
-    return 'from-purple-500 to-pink-500';
+    if (!verified) return 'from-[#938BA1] to-[#1C448E]';
+    if (level === 'basic') return 'from-[#1C448E] to-[#938BA1]';
+    if (level === 'advanced') return 'from-[#F4FDFF] to-[#938BA1]';
+    return 'from-[#938BA1] to-[#F4FDFF]';
   };
 
   const getBadgeText = () => {
@@ -252,7 +393,7 @@ const VerificationBadge: React.FC<{
   };
 
   return (
-    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r ${getBadgeColor()} text-white`}>
+    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r ${getBadgeColor()} text-[#1C448E]`}>
       {verified ? (
         <CheckCircle size={12} className="mr-1" />
       ) : (
@@ -263,7 +404,7 @@ const VerificationBadge: React.FC<{
   );
 };
 
-// Animated Stat Card Component
+// Animated Stat Card Component - Updated Colors
 const AnimatedStatCard: React.FC<{
   icon: React.ReactNode;
   label: string;
@@ -275,8 +416,8 @@ const AnimatedStatCard: React.FC<{
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ delay, duration: 0.5 }}
-    whileHover={{ y: -5 }}
-    className={`bg-gradient-to-br ${color} rounded-xl p-4 text-white`}
+    whileHover={{ y: -5, scale: 1.02 }}
+    className={`bg-gradient-to-br ${color} rounded-xl p-4 text-[#F4FDFF] shadow-lg hover:shadow-xl transition-all duration-300`}
   >
     <div className="flex items-center justify-between mb-2">
       {icon}
@@ -309,7 +450,6 @@ const Profile: React.FC = () => {
   const [activeSession, setActiveSession] = useState<any>(null)
 
   const profileForm = useForm<ProfileFormData>({
-    // Fix: Cast the resolver to any to bypass type mismatch
     resolver: yupResolver(profileSchema) as any,
     defaultValues: {
       fullName: user?.fullName || '',
@@ -323,12 +463,10 @@ const Profile: React.FC = () => {
   })
 
   const passwordForm = useForm<PasswordFormData>({
-    // Fix: Cast the resolver to any to bypass type mismatch
     resolver: yupResolver(passwordSchema) as any,
   })
 
   const notificationForm = useForm<NotificationFormData>({
-    // Fix: Cast the resolver to any to bypass type mismatch
     resolver: yupResolver(notificationSchema) as any,
     defaultValues: (user as any)?.notificationSettings || {
       emailNotifications: true,
@@ -475,10 +613,10 @@ const Profile: React.FC = () => {
   }
 
   const stats = [
-    { icon: <Award size={20} />, label: 'Verification Score', value: '98%', color: 'from-purple-500 to-pink-500', delay: 0.1 },
-    { icon: <Shield size={20} />, label: 'Trust Rating', value: '95%', color: 'from-blue-500 to-cyan-500', delay: 0.2 },
-    { icon: <TrendingUp size={20} />, label: 'Items Returned', value: '12', color: 'from-green-500 to-emerald-500', delay: 0.3 },
-    { icon: <Award size={20} />, label: 'Community Rank', value: 'Top 5%', color: 'from-orange-500 to-red-500', delay: 0.4 },
+    { icon: <Award size={20} />, label: 'Verification Score', value: '98%', color: 'from-[#1C448E] to-[#938BA1]', delay: 0.1 },
+    { icon: <Shield size={20} />, label: 'Trust Rating', value: '95%', color: 'from-[#938BA1] to-[#F4FDFF]', delay: 0.2 },
+    { icon: <TrendingUp size={20} />, label: 'Items Returned', value: '12', color: 'from-[#1C448E] to-[#0F2A5E]', delay: 0.3 },
+    { icon: <Award size={20} />, label: 'Community Rank', value: 'Top 5%', color: 'from-[#938BA1] to-[#1C448E]', delay: 0.4 },
   ]
 
   if (isLoading && !user) {
@@ -486,17 +624,23 @@ const Profile: React.FC = () => {
   }
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-[#4b0082] via-[#6d28d9] to-[#4b0082] overflow-hidden">
+    <div className="relative min-h-screen bg-gradient-to-br from-[#1C448E] via-[#0F2A5E] to-[#1C448E] overflow-hidden">
       
-      {/* 3D Background */}
+      {/* 3D Background - New Galaxy */}
       <div className="fixed inset-0">
-        <Canvas camera={{ position: [0, 0, 5], fov: 50 }}>
+        <Canvas camera={{ position: [0, 0, 6], fov: 55 }}>
           <ambientLight intensity={0.3} />
-          <directionalLight position={[5, 5, 5]} intensity={0.8} color="#E5E4E2" />
-          <pointLight position={[-5, -5, -5]} intensity={0.5} color="#8b5cf6" />
-          <Profile3DBackground />
+          <directionalLight position={[3, 5, 3]} intensity={0.8} color="#F4FDFF" />
+          <pointLight position={[-3, 2, -3]} intensity={0.5} color="#938BA1" />
+          <pointLight position={[2, -3, 4]} intensity={0.4} color="#1C448E" />
+          <pointLight position={[0, 4, 0]} intensity={0.5} color="#F4FDFF" />
+          <ProfileParticleGalaxy />
+          <FluidAuraBackground />
         </Canvas>
       </div>
+      
+      {/* Gradient overlay */}
+      <div className="fixed inset-0 bg-gradient-to-b from-[#1C448E]/30 via-transparent to-[#1C448E]/40 pointer-events-none" />
       
       {/* Content */}
       <div className="relative z-10 max-w-6xl mx-auto px-4 py-8">
@@ -510,15 +654,22 @@ const Profile: React.FC = () => {
           <motion.div
             initial={{ scale: 0, rotate: -180 }}
             animate={{ scale: 1, rotate: 0 }}
-            transition={{ duration: 0.6, type: "spring" }}
-            className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-[#E5E4E2] to-[#c4b5fd] rounded-2xl shadow-xl mb-4"
+            transition={{ duration: 0.6, type: "spring", bounce: 0.5 }}
+            className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#F4FDFF] to-[#938BA1] rounded-2xl shadow-2xl mb-4 relative"
           >
-            <User className="w-8 h-8 text-[#4b0082]" />
+            <User className="w-8 h-8 text-[#1C448E]" />
+            <motion.div 
+              className="absolute -top-1 -right-1"
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              <Crown className="w-4 h-4 text-[#F4FDFF]" />
+            </motion.div>
           </motion.div>
-          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-[#E5E4E2] to-[#c4b5fd] bg-clip-text text-transparent">
+          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] bg-clip-text text-transparent">
             Profile Settings
           </h1>
-          <p className="text-white/60 mt-2">
+          <p className="text-[#F4FDFF]/40 mt-2">
             Manage your account settings, security, and preferences
           </p>
         </motion.div>
@@ -553,11 +704,11 @@ const Profile: React.FC = () => {
                 exit={{ opacity: 0, y: -20 }}
                 className="space-y-6"
               >
-                {/* Avatar Section */}
-                <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20">
+                {/* Avatar Section - AMBER GLASS */}
+                <div className="bg-[#938BA1]/10 backdrop-blur-2xl rounded-2xl p-6 border border-[#938BA1]/20 shadow-xl">
                   <div className="flex items-center space-x-6">
                     <div className="relative">
-                      <div className="w-24 h-24 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center">
+                      <div className="w-24 h-24 rounded-full bg-gradient-to-r from-[#1C448E] to-[#938BA1] flex items-center justify-center">
                         {user?.avatar ? (
                           <img
                             src={user.avatar}
@@ -565,7 +716,7 @@ const Profile: React.FC = () => {
                             className="w-full h-full rounded-full object-cover"
                           />
                         ) : (
-                          <User size={48} className="text-white" />
+                          <User size={48} className="text-[#F4FDFF]" />
                         )}
                       </div>
                       
@@ -575,24 +726,24 @@ const Profile: React.FC = () => {
                         maxSize={5 * 1024 * 1024}
                         isLoading={isUploading}
                       >
-                        <button className="absolute bottom-0 right-0 bg-gradient-to-r from-[#E5E4E2] to-[#c4b5fd] text-[#4b0082] p-2 rounded-full transition-all duration-300 hover:scale-110">
+                        <button className="absolute bottom-0 right-0 bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] text-[#1C448E] p-2 rounded-full transition-all duration-300 hover:scale-110 shadow-lg">
                           <Camera size={16} />
                         </button>
                       </FileUpload>
                     </div>
                     
                     <div className="flex-1">
-                      <h2 className="text-2xl font-bold text-white">{user?.fullName}</h2>
-                      <p className="text-white/50">{user?.email}</p>
+                      <h2 className="text-2xl font-bold text-[#F4FDFF]">{user?.fullName}</h2>
+                      <p className="text-[#F4FDFF]/40">{user?.email}</p>
                       
-                      <div className="flex items-center space-x-2 mt-2">
+                      <div className="flex items-center space-x-2 mt-2 flex-wrap gap-2">
                         <VerificationBadge 
                           level={user?.verificationLevel || 'basic'}
                           verified={user?.identityVerified || false}
                         />
                         
                         {user?.role === 'admin' && (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-red-500 to-pink-500 text-white">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-[#938BA1] to-[#F4FDFF] text-[#1C448E]">
                             <Shield size={12} className="mr-1" />
                             Administrator
                           </span>
@@ -602,16 +753,16 @@ const Profile: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Profile Form */}
-                <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20">
+                {/* Profile Form - ROSE GLASS */}
+                <div className="bg-[#F4FDFF]/5 backdrop-blur-2xl rounded-2xl p-6 border border-[#F4FDFF]/10 shadow-xl">
                   <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-semibold text-white">Personal Information</h3>
+                    <h3 className="text-lg font-semibold text-[#F4FDFF]">Personal Information</h3>
                     
                     {!isEditing ? (
                       <Button
                         variant="outline"
                         onClick={() => setIsEditing(true)}
-                        className="border-white/20 text-white hover:bg-white/10"
+                        className="border-[#F4FDFF]/20 text-[#F4FDFF] hover:bg-[#F4FDFF]/10"
                       >
                         <Edit2 size={16} className="mr-2" />
                         Edit Profile
@@ -624,6 +775,7 @@ const Profile: React.FC = () => {
                             setIsEditing(false)
                             profileForm.reset()
                           }}
+                          className="border-[#F4FDFF]/20 text-[#F4FDFF] hover:bg-[#F4FDFF]/10"
                         >
                           <X size={16} className="mr-2" />
                           Cancel
@@ -631,7 +783,7 @@ const Profile: React.FC = () => {
                         <Button
                           onClick={() => profileForm.handleSubmit(handleProfileUpdate)()}
                           isLoading={isLoading}
-                          className="bg-gradient-to-r from-[#E5E4E2] to-[#c4b5fd] text-[#4b0082]"
+                          className="bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] text-[#1C448E] hover:shadow-lg hover:shadow-[#938BA1]/20"
                         >
                           <Save size={16} className="mr-2" />
                           Save Changes
@@ -649,7 +801,7 @@ const Profile: React.FC = () => {
                           {...profileForm.register('fullName')}
                           error={profileForm.formState.errors.fullName?.message}
                           disabled={!isEditing}
-                          className="bg-white/5 border-white/20 bg-transparent text-white placeholder-white/30"
+                          className="bg-[#F4FDFF]/5 border-[#F4FDFF]/15 text-[#F4FDFF] placeholder-[#F4FDFF]/20 focus:border-[#F4FDFF]"
                         />
                       </div>
                       
@@ -660,7 +812,7 @@ const Profile: React.FC = () => {
                           {...profileForm.register('email')}
                           error={profileForm.formState.errors.email?.message}
                           disabled={!isEditing}
-                          className="bg-white/5 border-white/20 text-white placeholder-white/30"
+                          className="bg-[#F4FDFF]/5 border-[#F4FDFF]/15 text-[#F4FDFF] placeholder-[#F4FDFF]/20 focus:border-[#F4FDFF]"
                         />
                       </div>
                       
@@ -671,7 +823,7 @@ const Profile: React.FC = () => {
                           {...profileForm.register('phone')}
                           error={profileForm.formState.errors.phone?.message}
                           disabled={!isEditing}
-                          className="bg-white/5 border-white/20 text-white placeholder-white/30"
+                          className="bg-[#F4FDFF]/5 border-[#F4FDFF]/15 text-[#F4FDFF] placeholder-[#F4FDFF]/20 focus:border-[#F4FDFF]"
                         />
                       </div>
                       
@@ -682,23 +834,23 @@ const Profile: React.FC = () => {
                           {...profileForm.register('location')}
                           error={profileForm.formState.errors.location?.message}
                           disabled={!isEditing}
-                          className="bg-white/5 border-white/20 text-white placeholder-white/30"
+                          className="bg-[#F4FDFF]/5 border-[#F4FDFF]/15 text-[#F4FDFF] placeholder-[#F4FDFF]/20 focus:border-[#F4FDFF]"
                         />
                       </div>
                       
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-white/80 mb-2">
+                        <label className="block text-sm font-medium text-[#F4FDFF]/70 mb-2">
                           Bio
                         </label>
                         <textarea
                           {...profileForm.register('bio')}
                           rows={3}
-                          className="w-full px-3 py-2 bg-white/5 border border-white/20 rounded-xl text-white placeholder-white/30 focus:border-[#E5E4E2] focus:ring-2 focus:ring-[#E5E4E2]/20 transition-all outline-none disabled:opacity-50"
+                          className="w-full px-3 py-2 bg-[#F4FDFF]/5 border border-[#F4FDFF]/15 rounded-xl text-[#F4FDFF] placeholder-[#F4FDFF]/20 focus:border-[#F4FDFF] focus:ring-2 focus:ring-[#F4FDFF]/20 transition-all outline-none disabled:opacity-50"
                           placeholder="Tell us about yourself..."
                           disabled={!isEditing}
                         />
                         {profileForm.formState.errors.bio && (
-                          <p className="text-sm text-red-400 mt-1">
+                          <p className="text-sm text-[#938BA1] mt-1">
                             {profileForm.formState.errors.bio.message}
                           </p>
                         )}
@@ -707,52 +859,52 @@ const Profile: React.FC = () => {
                   </form>
                 </div>
 
-                {/* Account Security Section */}
-                <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20">
-                  <h3 className="text-lg font-semibold text-white mb-4">Account Security</h3>
+                {/* Account Security Section - TEAL GLASS */}
+                <div className="bg-[#1C448E]/20 backdrop-blur-2xl rounded-2xl p-6 border border-[#1C448E]/30 shadow-xl">
+                  <h3 className="text-lg font-semibold text-[#F4FDFF] mb-4">Account Security</h3>
                   
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
+                    <div className="flex items-center justify-between p-4 bg-[#F4FDFF]/5 rounded-xl border border-[#F4FDFF]/10">
                       <div className="flex items-center">
-                        <Lock className="text-[#E5E4E2] mr-3" size={20} />
+                        <Lock className="text-[#F4FDFF] mr-3" size={20} />
                         <div>
-                          <h4 className="font-medium text-white">Password</h4>
-                          <p className="text-sm text-white/40">Last changed 2 weeks ago</p>
+                          <h4 className="font-medium text-[#F4FDFF]">Password</h4>
+                          <p className="text-sm text-[#F4FDFF]/40">Last changed 2 weeks ago</p>
                         </div>
                       </div>
                       <Button
                         variant="outline"
                         onClick={() => setShowPasswordModal(true)}
-                        className="border-white/20 text-white hover:bg-white/10"
+                        className="border-[#F4FDFF]/20 text-[#F4FDFF] hover:bg-[#F4FDFF]/10"
                       >
                         Change
                       </Button>
                     </div>
 
-                    <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
+                    <div className="flex items-center justify-between p-4 bg-[#F4FDFF]/5 rounded-xl border border-[#F4FDFF]/10">
                       <div className="flex items-center">
-                        <Fingerprint className="text-[#E5E4E2] mr-3" size={20} />
+                        <Fingerprint className="text-[#F4FDFF] mr-3" size={20} />
                         <div>
-                          <h4 className="font-medium text-white">Two-Factor Authentication</h4>
-                          <p className="text-sm text-white/40">
+                          <h4 className="font-medium text-[#F4FDFF]">Two-Factor Authentication</h4>
+                          <p className="text-sm text-[#F4FDFF]/40">
                             {user?.twoFactorEnabled ? 'Enabled' : 'Disabled'}
                           </p>
                         </div>
                       </div>
                       <Button
                         variant={user?.twoFactorEnabled ? 'secondary' : 'primary'}
-                        className={user?.twoFactorEnabled ? 'border-white/20 text-white hover:bg-white/10' : 'bg-gradient-to-r from-[#E5E4E2] to-[#c4b5fd] text-[#4b0082]'}
+                        className={user?.twoFactorEnabled ? 'border-[#F4FDFF]/20 text-[#F4FDFF] hover:bg-[#F4FDFF]/10' : 'bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] text-[#1C448E] hover:shadow-lg hover:shadow-[#938BA1]/20'}
                       >
                         {user?.twoFactorEnabled ? 'Manage' : 'Enable'}
                       </Button>
                     </div>
 
-                    <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl">
+                    <div className="flex items-center justify-between p-4 bg-[#F4FDFF]/5 rounded-xl border border-[#F4FDFF]/10">
                       <div className="flex items-center">
-                        <Activity className="text-[#E5E4E2] mr-3" size={20} />
+                        <Activity className="text-[#F4FDFF] mr-3" size={20} />
                         <div>
-                          <h4 className="font-medium text-white">Active Sessions</h4>
-                          <p className="text-sm text-white/40">
+                          <h4 className="font-medium text-[#F4FDFF]">Active Sessions</h4>
+                          <p className="text-sm text-[#F4FDFF]/40">
                             {userSessions.length} active session{userSessions.length !== 1 ? 's' : ''}
                           </p>
                         </div>
@@ -760,7 +912,7 @@ const Profile: React.FC = () => {
                       <Button
                         variant="outline"
                         onClick={() => setShowSessionsModal(true)}
-                        className="border-white/20 text-white hover:bg-white/10"
+                        className="border-[#F4FDFF]/20 text-[#F4FDFF] hover:bg-[#F4FDFF]/10"
                       >
                         View All
                       </Button>
@@ -778,37 +930,37 @@ const Profile: React.FC = () => {
                 exit={{ opacity: 0, y: -20 }}
                 className="space-y-6"
               >
-                {/* Verification Status */}
-                <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20">
+                {/* Verification Status - ROSE GLASS */}
+                <div className="bg-[#F4FDFF]/5 backdrop-blur-2xl rounded-2xl p-6 border border-[#F4FDFF]/10 shadow-xl">
                   <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-semibold text-white">Identity Verification</h3>
+                    <h3 className="text-lg font-semibold text-[#F4FDFF]">Identity Verification</h3>
                     <Button
                       onClick={handleStartVerification}
                       disabled={user?.identityVerified || verificationRequests.some(v => v.status === 'pending')}
-                      className="bg-gradient-to-r from-[#E5E4E2] to-[#c4b5fd] text-[#4b0082]"
+                      className="bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] text-[#1C448E] hover:shadow-lg hover:shadow-[#938BA1]/20"
                     >
                       {user?.identityVerified ? 'Verified' : 'Verify Identity'}
                     </Button>
                   </div>
 
                   {user?.identityVerified ? (
-                    <div className="flex items-center p-4 bg-green-500/10 rounded-xl border border-green-500/20">
-                      <CheckCircle className="text-green-400 mr-3" size={24} />
+                    <div className="flex items-center p-4 bg-[#938BA1]/10 rounded-xl border border-[#938BA1]/20">
+                      <CheckCircle className="text-[#938BA1] mr-3" size={24} />
                       <div>
-                        <h4 className="font-medium text-green-400">Identity Verified</h4>
-                        <p className="text-sm text-green-300/70">
+                        <h4 className="font-medium text-[#F4FDFF]">Identity Verified</h4>
+                        <p className="text-sm text-[#F4FDFF]/50">
                           Your identity has been successfully verified. You have full access to all features.
                         </p>
                       </div>
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      <div className="p-4 bg-yellow-500/10 rounded-xl border border-yellow-500/20">
+                      <div className="p-4 bg-[#938BA1]/10 rounded-xl border border-[#938BA1]/20">
                         <div className="flex items-start">
-                          <AlertCircle className="text-yellow-400 mr-3 mt-0.5" size={20} />
+                          <AlertCircle className="text-[#938BA1] mr-3 mt-0.5" size={20} />
                           <div>
-                            <h4 className="font-medium text-yellow-400">Verification Required</h4>
-                            <p className="text-sm text-yellow-300/70">
+                            <h4 className="font-medium text-[#F4FDFF]">Verification Required</h4>
+                            <p className="text-sm text-[#F4FDFF]/50">
                               To report and claim items, you need to verify your identity.
                               This helps prevent fraud and ensures items are returned to rightful owners.
                             </p>
@@ -817,53 +969,53 @@ const Profile: React.FC = () => {
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="p-4 bg-white/5 rounded-xl text-center border border-white/10">
-                          <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <FileText className="text-blue-400" size={24} />
+                        <div className="p-4 bg-[#F4FDFF]/5 rounded-xl text-center border border-[#F4FDFF]/10">
+                          <div className="w-12 h-12 bg-[#1C448E]/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <FileText className="text-[#938BA1]" size={24} />
                           </div>
-                          <h4 className="font-medium text-white mb-1">Upload Documents</h4>
-                          <p className="text-xs text-white/40">Provide government-issued ID</p>
+                          <h4 className="font-medium text-[#F4FDFF] mb-1">Upload Documents</h4>
+                          <p className="text-xs text-[#F4FDFF]/40">Provide government-issued ID</p>
                         </div>
 
-                        <div className="p-4 bg-white/5 rounded-xl text-center border border-white/10">
-                          <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <Camera className="text-green-400" size={24} />
+                        <div className="p-4 bg-[#F4FDFF]/5 rounded-xl text-center border border-[#F4FDFF]/10">
+                          <div className="w-12 h-12 bg-[#938BA1]/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <Camera className="text-[#F4FDFF]" size={24} />
                           </div>
-                          <h4 className="font-medium text-white mb-1">Take Selfie</h4>
-                          <p className="text-xs text-white/40">Verify it's really you</p>
+                          <h4 className="font-medium text-[#F4FDFF] mb-1">Take Selfie</h4>
+                          <p className="text-xs text-[#F4FDFF]/40">Verify it's really you</p>
                         </div>
 
-                        <div className="p-4 bg-white/5 rounded-xl text-center border border-white/10">
-                          <div className="w-12 h-12 bg-purple-500/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <Shield className="text-purple-400" size={24} />
+                        <div className="p-4 bg-[#F4FDFF]/5 rounded-xl text-center border border-[#F4FDFF]/10">
+                          <div className="w-12 h-12 bg-[#1C448E]/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <Shield className="text-[#F4FDFF]" size={24} />
                           </div>
-                          <h4 className="font-medium text-white mb-1">Get Verified</h4>
-                          <p className="text-xs text-white/40">Process takes 24-48 hours</p>
+                          <h4 className="font-medium text-[#F4FDFF] mb-1">Get Verified</h4>
+                          <p className="text-xs text-[#F4FDFF]/40">Process takes 24-48 hours</p>
                         </div>
                       </div>
                     </div>
                   )}
                 </div>
 
-                {/* Security Events */}
-                <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20">
+                {/* Security Events - AMBER GLASS */}
+                <div className="bg-[#938BA1]/10 backdrop-blur-2xl rounded-2xl p-6 border border-[#938BA1]/20 shadow-xl">
                   <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-lg font-semibold text-white">Security Activity</h3>
-                    <Button variant="outline" className="border-white/20 text-white hover:bg-white/10">
+                    <h3 className="text-lg font-semibold text-[#F4FDFF]">Security Activity</h3>
+                    <Button variant="outline" className="border-[#F4FDFF]/20 text-[#F4FDFF] hover:bg-[#F4FDFF]/10">
                       View All
                     </Button>
                   </div>
 
                   <div className="space-y-3">
                     {securityEvents.slice(0, 5).map((event) => (
-                      <div key={event.id} className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
+                      <div key={event.id} className="flex items-center justify-between p-3 bg-[#F4FDFF]/5 rounded-xl border border-[#F4FDFF]/10">
                         <div className="flex items-center">
                           <div className={`p-2 rounded-full mr-3 ${
                             event.type === 'login' 
-                              ? 'bg-blue-500/20 text-blue-400'
+                              ? 'bg-[#1C448E]/20 text-[#938BA1]'
                               : event.type === 'logout'
-                              ? 'bg-gray-500/20 text-gray-400'
-                              : 'bg-red-500/20 text-red-400'
+                              ? 'bg-[#938BA1]/20 text-[#1C448E]'
+                              : 'bg-[#938BA1]/20 text-[#938BA1]'
                           }`}>
                             {event.type === 'login' ? (
                               <Key size={16} />
@@ -874,14 +1026,14 @@ const Profile: React.FC = () => {
                             )}
                           </div>
                           <div>
-                            <p className="font-medium text-white text-sm">{event.action}</p>
-                            <p className="text-xs text-white/40">
+                            <p className="font-medium text-[#F4FDFF] text-sm">{event.action}</p>
+                            <p className="text-xs text-[#F4FDFF]/40">
                               {format(new Date(event.timestamp), 'MMM d, HH:mm')}
                             </p>
                           </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-xs text-white/40">{event.ipAddress}</p>
+                          <p className="text-xs text-[#F4FDFF]/40">{event.ipAddress}</p>
                         </div>
                       </div>
                     ))}
@@ -897,24 +1049,24 @@ const Profile: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
               >
-                <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20">
-                  <h3 className="text-lg font-semibold text-white mb-6">Notification Preferences</h3>
+                <div className="bg-[#F4FDFF]/5 backdrop-blur-2xl rounded-2xl p-6 border border-[#F4FDFF]/10 shadow-xl">
+                  <h3 className="text-lg font-semibold text-[#F4FDFF] mb-6">Notification Preferences</h3>
                   
                   <form onSubmit={notificationForm.handleSubmit(handleNotificationUpdate)} className="space-y-6">
                     <div>
-                      <h4 className="font-medium text-white mb-4">Notification Channels</h4>
+                      <h4 className="font-medium text-[#F4FDFF] mb-4">Notification Channels</h4>
                       <div className="space-y-3">
                         {[
                           { name: 'emailNotifications', icon: Mail, label: 'Email Notifications', desc: 'Receive notifications via email' },
                           { name: 'pushNotifications', icon: Bell, label: 'Push Notifications', desc: 'Receive push notifications' },
                           { name: 'smsNotifications', icon: Smartphone, label: 'SMS Notifications', desc: 'Receive SMS notifications' },
                         ].map((channel) => (
-                          <div key={channel.name} className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
+                          <div key={channel.name} className="flex items-center justify-between p-3 bg-[#F4FDFF]/5 rounded-xl border border-[#F4FDFF]/10">
                             <div className="flex items-center">
-                              <channel.icon className="text-[#E5E4E2] mr-3" size={20} />
+                              <channel.icon className="text-[#F4FDFF] mr-3" size={20} />
                               <div>
-                                <p className="font-medium text-white">{channel.label}</p>
-                                <p className="text-xs text-white/40">{channel.desc}</p>
+                                <p className="font-medium text-[#F4FDFF]">{channel.label}</p>
+                                <p className="text-xs text-[#F4FDFF]/40">{channel.desc}</p>
                               </div>
                             </div>
                             <Controller
@@ -928,7 +1080,7 @@ const Profile: React.FC = () => {
                                     checked={field.value as boolean}
                                     onChange={field.onChange}
                                   />
-                                  <div className="w-11 h-6 bg-white/20 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#E5E4E2]"></div>
+                                  <div className="w-11 h-6 bg-[#F4FDFF]/20 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#938BA1]/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#938BA1]"></div>
                                 </label>
                               )}
                             />
@@ -938,7 +1090,7 @@ const Profile: React.FC = () => {
                     </div>
 
                     <div>
-                      <h4 className="font-medium text-white mb-4">Notification Types</h4>
+                      <h4 className="font-medium text-[#F4FDFF] mb-4">Notification Types</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         {[
                           { name: 'itemMatches', label: 'Item Matches', desc: 'When items match your lost/found reports' },
@@ -946,10 +1098,10 @@ const Profile: React.FC = () => {
                           { name: 'claimUpdates', label: 'Claim Updates', desc: 'When claim status changes' },
                           { name: 'messages', label: 'Messages', desc: 'When you receive new messages' },
                         ].map((type) => (
-                          <div key={type.name} className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
+                          <div key={type.name} className="flex items-center justify-between p-3 bg-[#F4FDFF]/5 rounded-xl border border-[#F4FDFF]/10">
                             <div>
-                              <p className="font-medium text-white">{type.label}</p>
-                              <p className="text-xs text-white/40">{type.desc}</p>
+                              <p className="font-medium text-[#F4FDFF]">{type.label}</p>
+                              <p className="text-xs text-[#F4FDFF]/40">{type.desc}</p>
                             </div>
                             <Controller
                               name={type.name as keyof NotificationFormData}
@@ -957,7 +1109,7 @@ const Profile: React.FC = () => {
                               render={({ field }) => (
                                 <input
                                   type="checkbox"
-                                  className="w-5 h-5 rounded border-white/30 bg-white/5 text-[#E5E4E2] focus:ring-[#E5E4E2]"
+                                  className="w-5 h-5 rounded border-[#F4FDFF]/30 bg-[#F4FDFF]/5 text-[#938BA1] focus:ring-[#938BA1]/30"
                                   checked={field.value as boolean}
                                   onChange={field.onChange}
                                 />
@@ -972,7 +1124,7 @@ const Profile: React.FC = () => {
                       <Button
                         type="submit"
                         isLoading={isLoading}
-                        className="bg-gradient-to-r from-[#E5E4E2] to-[#c4b5fd] text-[#4b0082]"
+                        className="bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] text-[#1C448E] hover:shadow-lg hover:shadow-[#938BA1]/20"
                       >
                         Save Notification Settings
                       </Button>
@@ -989,12 +1141,12 @@ const Profile: React.FC = () => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
               >
-                <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 border border-white/20">
-                  <h3 className="text-lg font-semibold text-white mb-6">Preferences</h3>
+                <div className="bg-[#F4FDFF]/5 backdrop-blur-2xl rounded-2xl p-6 border border-[#F4FDFF]/10 shadow-xl">
+                  <h3 className="text-lg font-semibold text-[#F4FDFF] mb-6">Preferences</h3>
                   
                   <div className="space-y-6">
                     <div>
-                      <h4 className="font-medium text-white mb-4">Appearance</h4>
+                      <h4 className="font-medium text-[#F4FDFF] mb-4">Appearance</h4>
                       <div className="flex space-x-4">
                         {[
                           { icon: Sun, label: 'Light', value: 'light' },
@@ -1003,17 +1155,17 @@ const Profile: React.FC = () => {
                         ].map((theme) => (
                           <button
                             key={theme.value}
-                            className="flex flex-col items-center p-4 border-2 rounded-xl transition-all hover:scale-105 bg-white/5 border-white/20 hover:border-[#E5E4E2]"
+                            className="flex flex-col items-center p-4 border-2 rounded-xl transition-all hover:scale-105 bg-[#F4FDFF]/5 border-[#F4FDFF]/20 hover:border-[#F4FDFF]"
                           >
-                            <theme.icon className="text-[#E5E4E2] mb-2" size={24} />
-                            <span className="text-white text-sm">{theme.label}</span>
+                            <theme.icon className="text-[#F4FDFF] mb-2" size={24} />
+                            <span className="text-[#F4FDFF] text-sm">{theme.label}</span>
                           </button>
                         ))}
                       </div>
                     </div>
 
                     <div>
-                      <h4 className="font-medium text-white mb-4">Language & Region</h4>
+                      <h4 className="font-medium text-[#F4FDFF] mb-4">Language & Region</h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Select
                           label="Language"
@@ -1025,7 +1177,7 @@ const Profile: React.FC = () => {
                           ]}
                           value={profileForm.watch('language')}
                           onChange={(value) => profileForm.setValue('language', value)}
-                          className="bg-white/5 border-white/20 text-white"
+                          className="bg-[#F4FDFF]/5 border-[#F4FDFF]/15 text-[#F4FDFF]"
                         />
                         
                         <Select
@@ -1038,18 +1190,18 @@ const Profile: React.FC = () => {
                           ]}
                           value={profileForm.watch('timezone')}
                           onChange={(value) => profileForm.setValue('timezone', value)}
-                          className="bg-white/5 border-white/20 text-white"
+                          className="bg-[#F4FDFF]/5 border-[#F4FDFF]/15 text-[#F4FDFF]"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <h4 className="font-medium text-white mb-4">Privacy</h4>
+                      <h4 className="font-medium text-[#F4FDFF] mb-4">Privacy</h4>
                       <div className="space-y-3">
-                        <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
+                        <div className="flex items-center justify-between p-3 bg-[#F4FDFF]/5 rounded-xl border border-[#F4FDFF]/10">
                           <div>
-                            <p className="font-medium text-white">Profile Visibility</p>
-                            <p className="text-xs text-white/40">Who can see your profile</p>
+                            <p className="font-medium text-[#F4FDFF]">Profile Visibility</p>
+                            <p className="text-xs text-[#F4FDFF]/40">Who can see your profile</p>
                           </div>
                           <Select
                             options={[
@@ -1059,18 +1211,18 @@ const Profile: React.FC = () => {
                             ]}
                             value="contacts"
                             onChange={() => {}}
-                            className="w-40 bg-white/5 border-white/20 text-white"
+                            className="w-40 bg-[#F4FDFF]/5 border-[#F4FDFF]/15 text-[#F4FDFF]"
                           />
                         </div>
 
-                        <div className="flex items-center justify-between p-3 bg-white/5 rounded-xl">
+                        <div className="flex items-center justify-between p-3 bg-[#F4FDFF]/5 rounded-xl border border-[#F4FDFF]/10">
                           <div>
-                            <p className="font-medium text-white">Show Contact Info</p>
-                            <p className="text-xs text-white/40">Display email and phone to others</p>
+                            <p className="font-medium text-[#F4FDFF]">Show Contact Info</p>
+                            <p className="text-xs text-[#F4FDFF]/40">Display email and phone to others</p>
                           </div>
                           <label className="relative inline-flex items-center cursor-pointer">
                             <input type="checkbox" className="sr-only peer" />
-                            <div className="w-11 h-6 bg-white/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#E5E4E2]"></div>
+                            <div className="w-11 h-6 bg-[#F4FDFF]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#938BA1]"></div>
                           </label>
                         </div>
                       </div>
@@ -1082,26 +1234,27 @@ const Profile: React.FC = () => {
           </AnimatePresence>
         </div>
 
-        {/* Danger Zone */}
+        {/* Danger Zone - RED GLASS */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="mt-8 p-6 rounded-2xl border border-red-500/30 bg-red-500/10 backdrop-blur-xl"
+          className="mt-8 p-6 rounded-2xl border border-[#938BA1]/30 bg-[#938BA1]/10 backdrop-blur-2xl shadow-xl"
         >
-          <h3 className="text-lg font-semibold text-red-400 mb-4">Danger Zone</h3>
+          <h3 className="text-lg font-semibold text-[#938BA1] mb-4">Danger Zone</h3>
           
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="font-medium text-red-300">Delete Account</h4>
-                <p className="text-sm text-red-300/70">
+                <h4 className="font-medium text-[#F4FDFF]">Delete Account</h4>
+                <p className="text-sm text-[#F4FDFF]/40">
                   Permanently delete your account and all associated data
                 </p>
               </div>
               <Button
                 variant="danger"
                 onClick={() => setShowDeleteModal(true)}
+                className="border-[#938BA1]/50 text-[#938BA1] hover:bg-[#938BA1]/10"
               >
                 Delete Account
               </Button>
@@ -1109,15 +1262,15 @@ const Profile: React.FC = () => {
 
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="font-medium text-red-300">Logout</h4>
-                <p className="text-sm text-red-300/70">
+                <h4 className="font-medium text-[#F4FDFF]">Logout</h4>
+                <p className="text-sm text-[#F4FDFF]/40">
                   Sign out from this device
                 </p>
               </div>
               <Button
                 variant="outline"
                 onClick={logout}
-                className="border-red-500/50 text-red-400 hover:bg-red-500/10"
+                className="border-[#F4FDFF]/20 text-[#F4FDFF] hover:bg-[#F4FDFF]/10"
               >
                 <LogOut size={16} className="mr-2" />
                 Logout
@@ -1127,7 +1280,7 @@ const Profile: React.FC = () => {
         </motion.div>
       </div>
 
-      {/* Modals */}
+      {/* Modals - Updated Colors */}
       <Modal isOpen={showPasswordModal} onClose={() => setShowPasswordModal(false)} title="Change Password" size="md">
         <form onSubmit={passwordForm.handleSubmit(handlePasswordChange)} className="space-y-4">
           <div className="relative">
@@ -1136,12 +1289,12 @@ const Profile: React.FC = () => {
               type={showPassword.current ? 'text' : 'password'}
               {...passwordForm.register('currentPassword')}
               error={passwordForm.formState.errors.currentPassword?.message}
-              className="bg-white/5 border-white/20 text-white placeholder-white/30"
+              className="bg-[#F4FDFF]/5 border-[#F4FDFF]/15 text-[#F4FDFF] placeholder-[#F4FDFF]/20"
             />
             <button
               type="button"
               onClick={() => setShowPassword(prev => ({ ...prev, current: !prev.current }))}
-              className="absolute right-3 top-8 text-white/40 hover:text-white/60"
+              className="absolute right-3 top-8 text-[#F4FDFF]/40 hover:text-[#F4FDFF]/60"
             >
               {showPassword.current ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -1153,12 +1306,12 @@ const Profile: React.FC = () => {
               type={showPassword.new ? 'text' : 'password'}
               {...passwordForm.register('newPassword')}
               error={passwordForm.formState.errors.newPassword?.message}
-              className="bg-white/5 border-white/20 text-white placeholder-white/30"
+              className="bg-[#F4FDFF]/5 border-[#F4FDFF]/15 text-[#F4FDFF] placeholder-[#F4FDFF]/20"
             />
             <button
               type="button"
               onClick={() => setShowPassword(prev => ({ ...prev, new: !prev.new }))}
-              className="absolute right-3 top-8 text-white/40 hover:text-white/60"
+              className="absolute right-3 top-8 text-[#F4FDFF]/40 hover:text-[#F4FDFF]/60"
             >
               {showPassword.new ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
@@ -1170,22 +1323,22 @@ const Profile: React.FC = () => {
               type={showPassword.confirm ? 'text' : 'password'}
               {...passwordForm.register('confirmPassword')}
               error={passwordForm.formState.errors.confirmPassword?.message}
-              className="bg-white/5 border-white/20 text-white placeholder-white/30"
+              className="bg-[#F4FDFF]/5 border-[#F4FDFF]/15 text-[#F4FDFF] placeholder-[#F4FDFF]/20"
             />
             <button
               type="button"
               onClick={() => setShowPassword(prev => ({ ...prev, confirm: !prev.confirm }))}
-              className="absolute right-3 top-8 text-white/40 hover:text-white/60"
+              className="absolute right-3 top-8 text-[#F4FDFF]/40 hover:text-[#F4FDFF]/60"
             >
               {showPassword.confirm ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
           
           <div className="flex justify-end space-x-3 pt-4">
-            <Button variant="secondary" onClick={() => setShowPasswordModal(false)}>
+            <Button variant="secondary" onClick={() => setShowPasswordModal(false)} className="border-[#F4FDFF]/20 text-[#F4FDFF] hover:bg-[#F4FDFF]/10">
               Cancel
             </Button>
-            <Button type="submit" isLoading={isLoading} className="bg-gradient-to-r from-[#E5E4E2] to-[#c4b5fd] text-[#4b0082]">
+            <Button type="submit" isLoading={isLoading} className="bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] text-[#1C448E] hover:shadow-lg hover:shadow-[#938BA1]/20">
               Change Password
             </Button>
           </div>
@@ -1194,12 +1347,12 @@ const Profile: React.FC = () => {
 
       <Modal isOpen={showSessionsModal} onClose={() => setShowSessionsModal(false)} title="Active Sessions" size="lg">
         <div className="space-y-4">
-          <div className="p-4 bg-blue-500/10 rounded-xl border border-blue-500/20">
+          <div className="p-4 bg-[#1C448E]/20 rounded-xl border border-[#1C448E]/30">
             <div className="flex items-center">
-              <Smartphone className="text-blue-400 mr-3" size={20} />
+              <Smartphone className="text-[#938BA1] mr-3" size={20} />
               <div>
-                <h4 className="font-medium text-blue-400">Current Session</h4>
-                <p className="text-xs text-blue-300/70">
+                <h4 className="font-medium text-[#F4FDFF]">Current Session</h4>
+                <p className="text-xs text-[#F4FDFF]/40">
                   {activeSession?.device?.browser} on {activeSession?.device?.os}
                 </p>
               </div>
@@ -1207,26 +1360,26 @@ const Profile: React.FC = () => {
           </div>
 
           <div className="space-y-3">
-            <h4 className="font-medium text-white">All Sessions</h4>
+            <h4 className="font-medium text-[#F4FDFF]">All Sessions</h4>
             {userSessions.map((session) => (
-              <div key={session.id} className={`flex items-center justify-between p-3 rounded-xl border ${session.current ? 'border-blue-500/50 bg-blue-500/10' : 'border-white/10 bg-white/5'}`}>
+              <div key={session.id} className={`flex items-center justify-between p-3 rounded-xl border ${session.current ? 'border-[#938BA1]/50 bg-[#938BA1]/10' : 'border-[#F4FDFF]/10 bg-[#F4FDFF]/5'}`}>
                 <div className="flex items-center">
-                  <div className="p-2 bg-white/10 rounded-lg mr-3">
-                    {session.device?.type === 'mobile' ? <Smartphone size={20} className="text-white/60" /> : <CreditCard size={20} className="text-white/60" />}
+                  <div className="p-2 bg-[#F4FDFF]/10 rounded-lg mr-3">
+                    {session.device?.type === 'mobile' ? <Smartphone size={20} className="text-[#F4FDFF]/60" /> : <CreditCard size={20} className="text-[#F4FDFF]/60" />}
                   </div>
                   <div>
-                    <p className="font-medium text-white text-sm">
+                    <p className="font-medium text-[#F4FDFF] text-sm">
                       {session.device?.browser} on {session.device?.os}
-                      {session.current && <span className="ml-2 text-xs text-blue-400">(Current)</span>}
+                      {session.current && <span className="ml-2 text-xs text-[#938BA1]">(Current)</span>}
                     </p>
-                    <p className="text-xs text-white/40">
+                    <p className="text-xs text-[#F4FDFF]/40">
                       Last active: {format(new Date(session.lastActive), 'MMM d, HH:mm')}
                     </p>
                   </div>
                 </div>
                 
                 {!session.current && (
-                  <Button variant="danger" size="sm" onClick={() => handleRevokeSession(session.id)}>
+                  <Button variant="danger" size="sm" onClick={() => handleRevokeSession(session.id)} className="border-[#938BA1]/50 text-[#938BA1] hover:bg-[#938BA1]/10">
                     Revoke
                   </Button>
                 )}
@@ -1234,11 +1387,11 @@ const Profile: React.FC = () => {
             ))}
           </div>
 
-          <div className="pt-4 border-t border-white/10">
-            <Button variant="danger" fullWidth onClick={handleRevokeAllSessions}>
+          <div className="pt-4 border-t border-[#F4FDFF]/10">
+            <Button variant="danger" fullWidth onClick={handleRevokeAllSessions} className="border-[#938BA1]/50 text-[#938BA1] hover:bg-[#938BA1]/10">
               Revoke All Other Sessions
             </Button>
-            <p className="text-xs text-white/30 text-center mt-2">
+            <p className="text-xs text-[#F4FDFF]/30 text-center mt-2">
               This will log you out from all other devices except this one.
             </p>
           </div>
@@ -1247,12 +1400,12 @@ const Profile: React.FC = () => {
 
       <Modal isOpen={showDeleteModal} onClose={() => setShowDeleteModal(false)} title="Delete Account" size="md">
         <div className="space-y-4">
-          <div className="p-4 bg-red-500/10 rounded-xl border border-red-500/20">
+          <div className="p-4 bg-[#938BA1]/10 rounded-xl border border-[#938BA1]/20">
             <div className="flex items-start">
-              <AlertCircle className="text-red-400 mr-3 mt-0.5" size={20} />
+              <AlertCircle className="text-[#938BA1] mr-3 mt-0.5" size={20} />
               <div>
-                <h4 className="font-medium text-red-400">Warning: This action cannot be undone</h4>
-                <p className="text-sm text-red-300/70 mt-1">
+                <h4 className="font-medium text-[#F4FDFF]">Warning: This action cannot be undone</h4>
+                <p className="text-sm text-[#F4FDFF]/40 mt-1">
                   Deleting your account will permanently remove all your data.
                 </p>
               </div>
@@ -1263,14 +1416,14 @@ const Profile: React.FC = () => {
             label="Enter your password to confirm"
             type="password"
             placeholder="Current password"
-            className="bg-white/5 border-white/20 text-white placeholder-white/30"
+            className="bg-[#F4FDFF]/5 border-[#F4FDFF]/15 text-[#F4FDFF] placeholder-[#F4FDFF]/20"
           />
 
           <div className="flex justify-end space-x-3 pt-4">
-            <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+            <Button variant="secondary" onClick={() => setShowDeleteModal(false)} className="border-[#F4FDFF]/20 text-[#F4FDFF] hover:bg-[#F4FDFF]/10">
               Cancel
             </Button>
-            <Button variant="danger" onClick={handleDeleteAccount}>
+            <Button variant="danger" onClick={handleDeleteAccount} className="border-[#938BA1]/50 text-[#938BA1] hover:bg-[#938BA1]/10">
               Delete Account
             </Button>
           </div>

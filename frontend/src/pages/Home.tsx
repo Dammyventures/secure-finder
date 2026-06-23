@@ -39,12 +39,12 @@ const RevolutionaryHomeScene: React.FC = () => {
       <Float speed={1.5} rotationIntensity={1} floatIntensity={1.5}>
         <Octahedron args={[1.3, 0]} ref={centerRef}>
           <MeshDistortMaterial 
-            color="#E5E4E2"
+            color="#938BA1"
             distort={0.6}
             speed={2}
             roughness={0.08}
             metalness={0.95}
-            emissive="#8b5cf6"
+            emissive="#1C448E"
             emissiveIntensity={1.2}
           />
         </Octahedron>
@@ -52,8 +52,8 @@ const RevolutionaryHomeScene: React.FC = () => {
       
       <TorusKnot args={[2.4, 0.08, 200, 32, 3, 4]} position={[0, 0, 0]} ref={torusRef}>
         <MeshDistortMaterial 
-          color="#8b5cf6"
-          emissive="#4b0082"
+          color="#1C448E"
+          emissive="#0F2A5E"
           emissiveIntensity={0.8}
           metalness={0.9}
           roughness={0.1}
@@ -62,8 +62,8 @@ const RevolutionaryHomeScene: React.FC = () => {
       
       <Ring args={[3.0, 3.2, 64]} position={[0, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
         <meshStandardMaterial 
-          color="#E5E4E2" 
-          emissive="#c4b5fd" 
+          color="#F4FDFF" 
+          emissive="#938BA1" 
           emissiveIntensity={0.5}
           metalness={0.85}
           transparent
@@ -76,7 +76,7 @@ const RevolutionaryHomeScene: React.FC = () => {
         const radius = 3.5
         const x = Math.cos(angle) * radius
         const z = Math.sin(angle) * radius
-        const colors = ["#E5E4E2", "#8b5cf6", "#c4b5fd", "#a78bfa", "#7c3aed", "#6d28d9", "#9b59b6", "#d4a5fc"]
+        const colors = ["#F4FDFF", "#1C448E", "#938BA1", "#7A8BB8", "#1C448E", "#0F2A5E", "#938BA1", "#F4FDFF"]
         return (
           <Float key={i} speed={1.2 + (i * 0.05)} rotationIntensity={0.5} floatIntensity={1.2} 
                  position={[x, Math.sin(angle * 2) * 0.6, z]}>
@@ -86,7 +86,7 @@ const RevolutionaryHomeScene: React.FC = () => {
                 distort={0.35}
                 speed={1.8}
                 metalness={0.9}
-                emissive="#4b0082"
+                emissive="#1C448E"
                 emissiveIntensity={0.5}
               />
             </Sphere>
@@ -104,11 +104,11 @@ const RevolutionaryHomeScene: React.FC = () => {
                  position={[x, Math.cos(angle * 3) * 1, z]}>
             <Sphere args={[0.12, 32, 32]}>
               <MeshDistortMaterial 
-                color="#E5E4E2" 
+                color="#F4FDFF" 
                 distort={0.2}
                 speed={1}
                 metalness={0.85}
-                emissive="#c4b5fd"
+                emissive="#938BA1"
                 emissiveIntensity={0.4}
               />
             </Sphere>
@@ -116,7 +116,7 @@ const RevolutionaryHomeScene: React.FC = () => {
         )
       })}
       
-      <ThreeSparkles count={800} scale={[15, 15, 15]} size={0.08} speed={0.5} color="#E5E4E2" />
+      <ThreeSparkles count={800} scale={[15, 15, 15]} size={0.08} speed={0.5} color="#F4FDFF" />
       <Stars radius={20} depth={80} count={3000} factor={6} fade />
     </group>
   )
@@ -131,10 +131,10 @@ const Hero3DScene: React.FC = () => {
         style={{ background: 'transparent' }}
       >
         <ambientLight intensity={0.4} />
-        <directionalLight position={[5, 10, 5]} intensity={1.2} color="#E5E4E2" />
-        <pointLight position={[-5, -5, -5]} intensity={0.8} color="#8b5cf6" />
-        <pointLight position={[5, 5, 5]} intensity={0.8} color="#E5E4E2" />
-        <pointLight position={[0, 6, 0]} intensity={0.7} color="#c4b5fd" />
+        <directionalLight position={[5, 10, 5]} intensity={1.2} color="#F4FDFF" />
+        <pointLight position={[-5, -5, -5]} intensity={0.8} color="#1C448E" />
+        <pointLight position={[5, 5, 5]} intensity={0.8} color="#F4FDFF" />
+        <pointLight position={[0, 6, 0]} intensity={0.7} color="#938BA1" />
         <RevolutionaryHomeScene />
         <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.3} />
       </Canvas>
@@ -208,12 +208,12 @@ const AnimatedCounter: React.FC<{ value: string; label: string }> = ({ value, la
       transition={{ duration: 0.6, type: "spring" }}
       className="text-center relative group"
     >
-      <div className="absolute inset-0 bg-gradient-to-r from-[#8b5cf6] to-[#4b0082] rounded-2xl blur-2xl opacity-0 group-hover:opacity-40 transition-opacity duration-500" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#1C448E] to-[#938BA1] rounded-2xl blur-2xl opacity-0 group-hover:opacity-40 transition-opacity duration-500" />
       <div className="relative">
-        <div className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black mb-2 md:mb-3 bg-gradient-to-r from-[#E5E4E2] to-[#c4b5fd] bg-clip-text text-transparent">
+        <div className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black mb-2 md:mb-3 bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] bg-clip-text text-transparent">
           {isInView ? count.toLocaleString() : '0'}{suffix}
         </div>
-        <div className="text-sm md:text-lg text-white/80 font-medium">{label}</div>
+        <div className="text-sm md:text-lg text-[#F4FDFF]/80 font-medium">{label}</div>
       </div>
     </motion.div>
   )
@@ -261,8 +261,8 @@ const Home: React.FC = () => {
   
   return (
     <Layout showHeader={true} showSidebar={false} showFooter={true}>
-      {/* Hero Section - FIXED RESPONSIVE */}
-    <section className="relative min-h-[100dvh] w-full flex items-center justify-center overflow-x-hidden overflow-y-auto bg-gradient-to-br from-[#4b0082] via-[#6d28d9] to-[#4b0082]">
+      {/* Hero Section - UPDATED WITH NEW COLORS */}
+      <section className="relative min-h-[100dvh] w-full flex items-center justify-center overflow-x-hidden overflow-y-auto bg-gradient-to-br from-[#1C448E] via-[#0F2A5E] to-[#1C448E]">
         <Hero3DScene />
         
         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/40" />
@@ -280,17 +280,17 @@ const Home: React.FC = () => {
               initial={{ scale: 0, rotate: -180 }}
               animate={{ scale: 1, rotate: 0 }}
               transition={{ duration: 0.8, type: "spring", bounce: 0.5 }}
-              className="inline-block mb-6 md:mb-8 px-4 md:px-6 py-2 md:py-3 bg-white/10 backdrop-blur-md rounded-full border border-white/20 shadow-2xl"
+              className="inline-block mb-6 md:mb-8 px-4 md:px-6 py-2 md:py-3 bg-[#F4FDFF]/10 backdrop-blur-md rounded-full border border-[#F4FDFF]/20 shadow-2xl"
               style={{
-                background: `linear-gradient(90deg, rgba(229,228,226,0.15), rgba(139,92,246,0.25), rgba(229,228,226,0.15))`,
+                background: `linear-gradient(90deg, rgba(244,253,255,0.15), rgba(28,68,142,0.25), rgba(244,253,255,0.15))`,
                 backgroundSize: '200% 100%',
                 animation: 'shimmer 3s infinite',
               }}
             >
-              <span className="text-[#E5E4E2] text-xs sm:text-sm font-semibold flex items-center gap-1 sm:gap-2">
-                <Crown className="w-3 h-3 sm:w-4 sm:h-4 text-[#E5E4E2] animate-pulse" />
+              <span className="text-[#F4FDFF] text-xs sm:text-sm font-semibold flex items-center gap-1 sm:gap-2">
+                <Crown className="w-3 h-3 sm:w-4 sm:h-4 text-[#F4FDFF] animate-pulse" />
                 Revolutionary Lost & Found Platform
-                <TrendingUp className="w-2 h-2 sm:w-3 sm:h-3 text-[#E5E4E2]" />
+                <TrendingUp className="w-2 h-2 sm:w-3 sm:h-3 text-[#F4FDFF]" />
               </span>
             </motion.div>
             
@@ -300,12 +300,12 @@ const Home: React.FC = () => {
               transition={{ delay: 0.2, duration: 0.8 }}
               className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black mb-4 md:mb-6 px-2"
             >
-              <span className="bg-gradient-to-r from-[#E5E4E2] via-[#c4b5fd] to-[#E5E4E2] bg-clip-text text-transparent block sm:inline">
+              <span className="bg-gradient-to-r from-[#F4FDFF] via-[#938BA1] to-[#F4FDFF] bg-clip-text text-transparent block sm:inline">
                 Find Lost Items
               </span>
               <br className="hidden sm:block" />
-              <span className="bg-gradient-to-r from-[#8b5cf6] to-[#E5E4E2] bg-clip-text text-transparent block sm:inline">
-                Revolutionarily Fast
+              <span className="bg-gradient-to-r from-[#F4FDFF] to-[#1C448E] bg-clip-text text-transparent block sm:inline">
+                Effortlessly Fast
               </span>
             </motion.h1>
             
@@ -313,10 +313,9 @@ const Home: React.FC = () => {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4, duration: 0.8 }}
-              className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 max-w-3xl mx-auto mb-8 md:mb-12 backdrop-blur-sm px-4"
+              className="text-base sm:text-lg md:text-xl lg:text-2xl text-[#F4FDFF]/90 max-w-3xl mx-auto mb-8 md:mb-12 backdrop-blur-sm px-4"
             >
-              Experience the world's most advanced lost and found platform with AI-powered matching and blockchain verification.
-              Join 50,000+ satisfied users today.
+              The most secure lost and found platform with multi-level authentication, identity verification, and intelligent matching to reunite you with your belongings.
             </motion.p>
             
             <motion.div 
@@ -327,16 +326,16 @@ const Home: React.FC = () => {
             >
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Link to="/register">
-                  <Button size="lg" className="text-sm sm:text-base md:text-lg px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-[#E5E4E2] to-[#c4b5fd] text-[#4b0082] hover:shadow-2xl rounded-full font-semibold relative overflow-hidden group w-full sm:w-auto">
+                  <Button size="lg" className="text-sm sm:text-base md:text-lg px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] text-[#1C448E] hover:shadow-2xl rounded-full font-semibold relative overflow-hidden group w-full sm:w-auto">
                     <span className="relative z-10">Get Started Free</span>
                     <Sparkles className="ml-2 inline relative z-10" size={16} />
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#c4b5fd] to-[#E5E4E2] translate-x-full group-hover:translate-x-0 transition-transform duration-500" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-[#938BA1] to-[#F4FDFF] translate-x-full group-hover:translate-x-0 transition-transform duration-500" />
                   </Button>
                 </Link>
               </motion.div>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Link to="/search">
-                  <Button variant="outline" size="lg" className="text-sm sm:text-base md:text-lg px-6 sm:px-8 py-3 sm:py-4 border-2 border-white/30 text-white hover:bg-white/20 backdrop-blur-sm rounded-full font-semibold w-full sm:w-auto">
+                  <Button variant="outline" size="lg" className="text-sm sm:text-base md:text-lg px-6 sm:px-8 py-3 sm:py-4 border-2 border-[#F4FDFF]/30 text-[#F4FDFF] hover:bg-[#F4FDFF]/20 backdrop-blur-sm rounded-full font-semibold w-full sm:w-auto">
                     <Search className="mr-2 inline" size={18} />
                     Explore Items
                   </Button>
@@ -353,21 +352,21 @@ const Home: React.FC = () => {
           className="absolute bottom-4 sm:bottom-6 md:bottom-8 left-1/2 transform -translate-x-1/2 z-20 cursor-pointer"
           onClick={() => window.scrollTo({ top: window.innerHeight, behavior: 'smooth' })}
         >
-          <div className="w-6 h-10 sm:w-7 sm:h-12 border-2 border-white/30 rounded-full flex justify-center">
+          <div className="w-6 h-10 sm:w-7 sm:h-12 border-2 border-[#F4FDFF]/30 rounded-full flex justify-center">
             <motion.div 
               animate={{ y: [0, 15, 0] }}
               transition={{ duration: 1.5, repeat: Infinity }}
-              className="w-1 h-2 sm:w-1.5 sm:h-3 bg-white/50 rounded-full mt-2" 
+              className="w-1 h-2 sm:w-1.5 sm:h-3 bg-[#F4FDFF]/50 rounded-full mt-2" 
             />
           </div>
         </motion.div>
       </section>
 
-      {/* How It Works - FIXED RESPONSIVE */}
-      <section className="py-12 sm:py-16 md:py-20 lg:py-24 bg-gradient-to-br from-white to-gray-50 relative overflow-hidden">
+      {/* How It Works - UPDATED WITH NEW COLORS */}
+      <section className="py-12 sm:py-16 md:py-20 lg:py-24 bg-[#F4FDFF] relative overflow-hidden">
         <div className="absolute inset-0 opacity-10 pointer-events-none">
           <Canvas>
-            <ThreeSparkles count={200} scale={[5, 5, 5]} size={0.05} speed={0.3} color="#4b0082" />
+            <ThreeSparkles count={200} scale={[5, 5, 5]} size={0.05} speed={0.3} color="#1C448E" />
           </Canvas>
         </div>
         
@@ -379,10 +378,10 @@ const Home: React.FC = () => {
             viewport={{ once: true }}
             className="text-center mb-8 sm:mb-12 md:mb-16"
           >
-            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 md:mb-4 bg-gradient-to-r from-[#4b0082] to-[#8b5cf6] bg-clip-text text-transparent px-2">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 md:mb-4 bg-gradient-to-r from-[#1C448E] to-[#938BA1] bg-clip-text text-transparent px-2">
               Revolutionary Process
             </h2>
-            <p className="text-gray-600 text-base sm:text-lg max-w-2xl mx-auto px-4">
+            <p className="text-[#1C448E]/70 text-base sm:text-lg max-w-2xl mx-auto px-4">
               Three groundbreaking steps to reunite lost items with their owners
             </p>
           </motion.div>
@@ -395,23 +394,23 @@ const Home: React.FC = () => {
             className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
           >
             {[
-              { step: '01', title: 'AI Report & Search', desc: 'Our advanced AI instantly catalogs your lost item and searches millions of listings.', icon: Search, gradient: 'from-[#4b0082] to-[#6d28d9]' },
-              { step: '02', title: 'Blockchain Verification', desc: 'Secure, tamper-proof verification ensuring legitimacy of all claims.', icon: Shield, gradient: 'from-[#6d28d9] to-[#8b5cf6]' },
-              { step: '03', title: 'Instant Match & Connect', desc: 'Real-time matching algorithm connects you instantly with your item.', icon: Zap, gradient: 'from-[#8b5cf6] to-[#c4b5fd]' }
+              { step: '01', title: 'AI Report & Search', desc: 'Our advanced AI instantly catalogs your lost item and searches millions of listings.', icon: Search, gradient: 'from-[#1C448E] to-[#0F2A5E]' },
+              { step: '02', title: 'Blockchain Verification', desc: 'Secure, tamper-proof verification ensuring legitimacy of all claims.', icon: Shield, gradient: 'from-[#0F2A5E] to-[#938BA1]' },
+              { step: '03', title: 'Instant Match & Connect', desc: 'Real-time matching algorithm connects you instantly with your item.', icon: Zap, gradient: 'from-[#938BA1] to-[#F4FDFF]' }
             ].map((item, i) => (
               <motion.div key={i} variants={itemVariants}>
                 <ThreeDCard className="relative">
-                  <div className="relative bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 text-center shadow-2xl border border-purple-100 overflow-hidden group">
+                  <div className="relative bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 text-center shadow-2xl border border-[#938BA1]/20 overflow-hidden group">
                     <div className={`absolute inset-0 bg-gradient-to-br ${item.gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-500`} />
                     <div className="relative">
                       <div className={`w-20 h-20 sm:w-24 sm:h-24 bg-gradient-to-br ${item.gradient} rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-6 transform transition-all duration-500 group-hover:scale-110 group-hover:rotate-12 shadow-xl`}>
                         <item.icon className="text-white" size={32} />
                       </div>
-                      <div className="text-6xl sm:text-7xl md:text-8xl font-black text-purple-50 absolute -top-3 -right-3 sm:-top-4 sm:-right-4 opacity-50">
+                      <div className="text-6xl sm:text-7xl md:text-8xl font-black text-[#938BA1]/20 absolute -top-3 -right-3 sm:-top-4 sm:-right-4">
                         {item.step}
                       </div>
-                      <h3 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-3 mt-2 sm:mt-4 text-gray-800">{item.title}</h3>
-                      <p className="text-gray-600 text-sm sm:text-base">{item.desc}</p>
+                      <h3 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-3 mt-2 sm:mt-4 text-[#1C448E]">{item.title}</h3>
+                      <p className="text-[#1C448E]/70 text-sm sm:text-base">{item.desc}</p>
                     </div>
                   </div>
                 </ThreeDCard>
@@ -421,8 +420,8 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Features - FIXED RESPONSIVE */}
-      <section className="py-12 sm:py-16 md:py-20 lg:py-24 bg-gradient-to-br from-purple-50 to-white relative">
+      {/* Features - UPDATED WITH NEW COLORS */}
+      <section className="py-12 sm:py-16 md:py-20 lg:py-24 bg-gradient-to-br from-[#F4FDFF] to-white relative">
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
@@ -430,10 +429,10 @@ const Home: React.FC = () => {
             viewport={{ once: true }}
             className="text-center mb-8 sm:mb-12 md:mb-16"
           >
-            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 md:mb-4 bg-gradient-to-r from-[#4b0082] to-[#8b5cf6] bg-clip-text text-transparent px-2">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-3 md:mb-4 bg-gradient-to-r from-[#1C448E] to-[#938BA1] bg-clip-text text-transparent px-2">
               Why Choose Secure Finder?
             </h2>
-            <p className="text-gray-600 text-base sm:text-lg max-w-3xl mx-auto px-4">
+            <p className="text-[#1C448E]/70 text-base sm:text-lg max-w-3xl mx-auto px-4">
               We combine cutting-edge technology with a human touch to help reunite lost items
             </p>
           </motion.div>
@@ -448,18 +447,18 @@ const Home: React.FC = () => {
             {features.map((feature, i) => (
               <motion.div key={i} variants={itemVariants}>
                 <ThreeDCard>
-                  <div className="group relative bg-white rounded-xl sm:rounded-2xl p-6 sm:p-8 shadow-xl hover:shadow-2xl transition-all duration-500 overflow-hidden border border-purple-100">
-                    <div className="absolute inset-0 bg-gradient-to-br from-[#4b0082]/5 to-[#8b5cf6]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <div className="group relative bg-white rounded-xl sm:rounded-2xl p-6 sm:p-8 shadow-xl hover:shadow-2xl transition-all duration-500 overflow-hidden border border-[#938BA1]/20">
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#1C448E]/5 to-[#938BA1]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                     <div className="relative">
-                      <div className="mb-4 sm:mb-5 text-[#4b0082] transition-all duration-500 group-hover:scale-110 group-hover:rotate-12 inline-block">
+                      <div className="mb-4 sm:mb-5 text-[#1C448E] transition-all duration-500 group-hover:scale-110 group-hover:rotate-12 inline-block">
                         {React.cloneElement(feature.icon, { size: 36, strokeWidth: 1.5 })}
                       </div>
-                      <h3 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-3 text-gray-800 group-hover:text-[#4b0082] transition-colors">
+                      <h3 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-3 text-[#1C448E] group-hover:text-[#1C448E] transition-colors">
                         {feature.title}
                       </h3>
-                      <p className="text-gray-600 text-sm sm:text-base leading-relaxed">{feature.description}</p>
+                      <p className="text-[#1C448E]/70 text-sm sm:text-base leading-relaxed">{feature.description}</p>
                       <div className="mt-4 sm:mt-6 opacity-0 group-hover:opacity-100 transition-all duration-300 transform -translate-x-1 group-hover:translate-x-0">
-                        <ChevronRight size={20} className="text-[#8b5cf6]" />
+                        <ChevronRight size={20} className="text-[#938BA1]" />
                       </div>
                     </div>
                   </div>
@@ -470,8 +469,8 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Stats - FIXED RESPONSIVE */}
-      <section className="py-12 sm:py-16 md:py-20 relative bg-gradient-to-r from-[#4b0082] via-[#6d28d9] to-[#4b0082] text-white overflow-hidden">
+      {/* Stats - UPDATED WITH NEW COLORS */}
+      <section className="py-12 sm:py-16 md:py-20 relative bg-gradient-to-r from-[#1C448E] via-[#0F2A5E] to-[#1C448E] text-white overflow-hidden">
         <div className="absolute inset-0 bg-black/20" />
         <div className="absolute inset-0 pointer-events-none">
           <Canvas>
@@ -494,8 +493,8 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* CTA - FIXED RESPONSIVE */}
-      <section className="py-12 sm:py-16 md:py-20 lg:py-24 bg-white relative overflow-hidden">
+      {/* CTA - UPDATED WITH NEW COLORS */}
+      <section className="py-12 sm:py-16 md:py-20 lg:py-24 bg-[#F4FDFF] relative overflow-hidden">
         <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -504,33 +503,33 @@ const Home: React.FC = () => {
             transition={{ duration: 0.8, type: "spring", bounce: 0.4 }}
             className="max-w-4xl mx-auto relative"
           >
-            <div className="absolute -inset-3 sm:-inset-4 bg-gradient-to-r from-[#4b0082] via-[#8b5cf6] to-[#4b0082] rounded-2xl sm:rounded-3xl blur-2xl opacity-30 animate-pulse" />
-            <div className="relative bg-gradient-to-r from-purple-50 to-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-12 shadow-2xl overflow-hidden border border-purple-200">
+            <div className="absolute -inset-3 sm:-inset-4 bg-gradient-to-r from-[#1C448E] via-[#938BA1] to-[#1C448E] rounded-2xl sm:rounded-3xl blur-2xl opacity-30 animate-pulse" />
+            <div className="relative bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 md:p-12 shadow-2xl overflow-hidden border border-[#938BA1]/20">
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
                 className="inline-block"
               >
-                <Globe className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 text-[#4b0082] mx-auto mb-4 md:mb-6" />
+                <Globe className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 text-[#1C448E] mx-auto mb-4 md:mb-6" />
               </motion.div>
               
-              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 md:mb-6 bg-gradient-to-r from-[#4b0082] to-[#8b5cf6] bg-clip-text text-transparent px-2">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 md:mb-6 bg-gradient-to-r from-[#1C448E] to-[#938BA1] bg-clip-text text-transparent px-2">
                 Join the Revolution
               </h2>
-              <p className="text-gray-600 text-base sm:text-lg md:text-xl mb-6 md:mb-10 max-w-2xl mx-auto px-4">
+              <p className="text-[#1C448E]/70 text-base sm:text-lg md:text-xl mb-6 md:mb-10 max-w-2xl mx-auto px-4">
                 Be part of the future of lost and found technology. Join 50,000+ users already experiencing the difference.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 md:gap-5 justify-center px-4">
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Link to="/register">
-                    <Button size="lg" className="text-sm sm:text-base md:text-lg px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-[#4b0082] to-[#8b5cf6] text-white hover:shadow-2xl rounded-full font-semibold w-full sm:w-auto">
+                    <Button size="lg" className="text-sm sm:text-base md:text-lg px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-[#1C448E] to-[#938BA1] text-white hover:shadow-2xl rounded-full font-semibold w-full sm:w-auto">
                       Start Your Journey <Diamond className="ml-2 inline" size={16} />
                     </Button>
                   </Link>
                 </motion.div>
                 <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                   <Link to="/about">
-                    <Button variant="outline" size="lg" className="bg-white text-sm sm:text-base md:text-lg px-6 sm:px-8 py-3 sm:py-4 border-2 border-[#4b0082] text-[#4b0082] hover:bg-purple-50 rounded-full font-semibold w-full sm:w-auto">
+                    <Button variant="outline" size="lg" className="bg-white text-sm sm:text-base md:text-lg px-6 sm:px-8 py-3 sm:py-4 border-2 border-[#1C448E] text-[#1C448E] hover:bg-[#F4FDFF] rounded-full font-semibold w-full sm:w-auto">
                       Watch Demo
                     </Button>
                   </Link>
