@@ -1,5 +1,6 @@
 // src/components/chat/ChatBot.tsx
 import React, { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   MessageCircle, 
@@ -17,7 +18,8 @@ import {
   Zap,
   Heart,
   Users,
-  Crown
+  Crown,
+  Waves
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
@@ -41,15 +43,22 @@ const ChatBot: React.FC = () => {
   const [inputText, setInputText] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
+  const [mounted, setMounted] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // Handle mounting for portal
+  useEffect(() => {
+    setMounted(true)
+    return () => setMounted(false)
+  }, [])
 
   // Initial greeting
   useEffect(() => {
     if (messages.length === 0) {
       const greeting: Message = {
         id: '1',
-        text: "👋 Hello! I'm your AI assistant. How can I help you today?",
+        text: "🌊 Hello! I'm your Ocean AI assistant. How can I help you today?",
         sender: 'bot',
         timestamp: new Date(),
         type: 'text'
@@ -199,7 +208,7 @@ const ChatBot: React.FC = () => {
     }
     // General greeting
     else if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
-      await simulateTyping("Hey there! 👋 I'm your AI assistant. I can help you with:\n\n🔍 Finding lost/found items\n✅ Verification process\n💬 Claims and messages\n📊 Dashboard navigation\n🎯 Search tips\n\nWhat would you like to know?")
+      await simulateTyping("🌊 Hey there! I'm your Ocean AI assistant. I can help you with:\n\n🔍 Finding lost/found items\n✅ Verification process\n💬 Claims and messages\n📊 Dashboard navigation\n🎯 Search tips\n\nWhat would you like to know?")
       addQuickReplies([
         { text: '🔍 Find my lost item', action: 'search' },
         { text: '📝 Report an item', action: 'report' },
@@ -217,7 +226,7 @@ const ChatBot: React.FC = () => {
     }
     // Default response
     else {
-      await simulateTyping("I can help you with:\n\n🔍 Finding lost/found items - ask me about search\n✅ Identity verification - ask about verification\n📝 Reporting items - ask how to report\n💬 Claims process - ask about claims\n🔔 Notifications - ask about alerts\n\nWhat specific help do you need? I'm here 24/7! 💫")
+      await simulateTyping("🌊 I can help you with:\n\n🔍 Finding lost/found items - ask me about search\n✅ Identity verification - ask about verification\n📝 Reporting items - ask how to report\n💬 Claims process - ask about claims\n🔔 Notifications - ask about alerts\n\nWhat specific help do you need? I'm here 24/7! 💫")
       addQuickReplies([
         { text: '🔍 Search items', action: 'search' },
         { text: '📝 Report item', action: 'report' },
@@ -229,7 +238,6 @@ const ChatBot: React.FC = () => {
 
   const addQuickReplies = (replies: QuickReply[]) => {
     const quickReplies = replies.map(reply => reply.text).join(' • ')
-    // Store quick replies for rendering
     setMessages(prev => [...prev, {
       id: `quick-${Date.now()}`,
       text: quickReplies,
@@ -293,13 +301,11 @@ const ChatBot: React.FC = () => {
     await getBotResponse(message)
   }
 
-  // Parse quick replies from message text
   const renderQuickReplies = (text: string) => {
     const replies = text.split(' • ')
     return (
-      <div className="flex flex-wrap gap-2 mt-2">
+      <div className="flex flex-wrap gap-1.5 sm:gap-2 mt-2">
         {replies.map((reply, idx) => {
-          // Map display text to action
           let action = ''
           if (reply.includes('Report Lost')) action = 'report_lost'
           else if (reply.includes('Search Found')) action = 'search_found'
@@ -323,13 +329,12 @@ const ChatBot: React.FC = () => {
           else if (reply.includes('Privacy')) action = 'privacy'
           else if (reply.includes('Leaderboard')) action = 'leaderboard'
           else if (reply.includes('earn more')) action = 'earn_more'
-          else if (reply.includes('Claim process')) action = 'claim_process'
           
           return (
             <button
               key={idx}
               onClick={() => handleQuickAction(action)}
-              className="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-full text-xs text-white transition-all duration-200"
+              className="px-2.5 py-1.5 sm:px-3 bg-[#4BB4DE]/10 hover:bg-[#4BB4DE]/20 rounded-full text-[10px] sm:text-xs text-[#EFDBCB] transition-all duration-200 border border-[#4BB4DE]/20 hover:border-[#4BB4DE]/40"
             >
               {reply}
             </button>
@@ -339,27 +344,28 @@ const ChatBot: React.FC = () => {
     )
   }
 
-  return (
+  // Chat content to render inside portal
+  const chatContent = (
     <>
-      {/* Chat Button */}
+      {/* Chat Button - Fixed Position Floating */}
       <motion.button
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 z-50 w-14 h-14 bg-gradient-to-r from-[#E5E4E2] to-[#c4b5fd] rounded-full shadow-2xl flex items-center justify-center group"
+        className="fixed bottom-4 sm:bottom-6 right-4 sm:right-6 z-[99999] w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-r from-[#4BB4DE] to-[#63BCE5] rounded-full shadow-2xl shadow-[#4BB4DE]/30 flex items-center justify-center group hover:shadow-[#4BB4DE]/50 transition-all duration-300 cursor-pointer"
       >
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center animate-pulse">
+          <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#7ED5EA] rounded-full text-[#150734] text-[10px] sm:text-xs flex items-center justify-center animate-pulse font-bold">
             {unreadCount}
           </span>
         )}
-        <MessageCircle className="w-6 h-6 text-[#4b0082]" />
-        <div className="absolute inset-0 rounded-full bg-white/20 animate-ping opacity-0 group-hover:opacity-100 transition-opacity" />
+        <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6 text-[#150734]" />
+        <div className="absolute inset-0 rounded-full bg-[#7ED5EA]/20 animate-ping opacity-0 group-hover:opacity-100 transition-opacity" />
       </motion.button>
 
-      {/* Chat Window */}
+      {/* Chat Window - Fixed Position Floating */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -367,54 +373,58 @@ const ChatBot: React.FC = () => {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 100, scale: 0.9 }}
             transition={{ type: "spring", damping: 25 }}
-            className="fixed bottom-24 right-6 z-50 w-[90vw] max-w-md h-[600px] bg-gradient-to-br from-[#4b0082] to-[#6d28d9] rounded-2xl shadow-2xl border border-white/20 flex flex-col overflow-hidden"
+            className="fixed bottom-20 sm:bottom-24 right-4 sm:right-6 z-[99999] w-[92vw] sm:w-[90vw] md:w-[400px] max-w-md h-[500px] sm:h-[550px] md:h-[600px] bg-gradient-to-br from-[#150734] via-[#0F2557] to-[#345DA7] rounded-2xl shadow-2xl shadow-[#4BB4DE]/20 border border-[#4BB4DE]/20 flex flex-col overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
-            <div className="bg-gradient-to-r from-[#E5E4E2] to-[#c4b5fd] p-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-[#4b0082] rounded-full flex items-center justify-center">
-                  <Bot className="w-5 h-5 text-[#E5E4E2]" />
+            {/* Header - Ocean Theme */}
+            <div className="bg-gradient-to-r from-[#4BB4DE] to-[#63BCE5] p-3 sm:p-4 flex items-center justify-between flex-shrink-0">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                <div className="w-8 h-8 sm:w-9 sm:h-10 bg-[#150734] rounded-full flex items-center justify-center flex-shrink-0">
+                  <Bot className="w-4 h-4 sm:w-5 sm:h-5 text-[#4BB4DE]" />
                 </div>
-                <div>
-                  <h3 className="font-bold text-[#4b0082]">AI Assistant</h3>
-                  <p className="text-xs text-[#4b0082]/70">Online • 24/7</p>
+                <div className="min-w-0">
+                  <h3 className="font-bold text-[#150734] text-sm sm:text-base truncate">Ocean AI</h3>
+                  <p className="text-[10px] sm:text-xs text-[#150734]/70 flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-green-400 rounded-full inline-block animate-pulse" />
+                    Online • 24/7
+                  </p>
                 </div>
               </div>
               <button
                 onClick={() => setIsOpen(false)}
-                className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center hover:bg-white/30 transition-colors"
+                className="w-7 h-7 sm:w-8 sm:h-8 bg-[#150734]/20 rounded-full flex items-center justify-center hover:bg-[#150734]/30 transition-colors flex-shrink-0"
               >
-                <X className="w-4 h-4 text-[#4b0082]" />
+                <X className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#150734]" />
               </button>
             </div>
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            {/* Messages - Ocean Theme */}
+            <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 sm:space-y-3">
               {messages.map((message) => (
                 <div
                   key={message.id}
                   className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[80%] rounded-2xl p-3 ${
+                    className={`max-w-[85%] sm:max-w-[80%] rounded-2xl p-2.5 sm:p-3 ${
                       message.sender === 'user'
-                        ? 'bg-gradient-to-r from-[#E5E4E2] to-[#c4b5fd] text-[#4b0082]'
-                        : 'bg-white/10 backdrop-blur-sm text-white border border-white/20'
+                        ? 'bg-gradient-to-r from-[#4BB4DE] to-[#63BCE5] text-[#150734]'
+                        : 'bg-[#4BB4DE]/10 backdrop-blur-sm text-[#EFDBCB] border border-[#4BB4DE]/20'
                     }`}
                   >
-                    <div className="flex items-start gap-2">
+                    <div className="flex items-start gap-1.5 sm:gap-2">
                       {message.sender === 'bot' && (
-                        <Bot className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                        <Bot className="w-3.5 h-3.5 sm:w-4 sm:h-4 mt-0.5 flex-shrink-0 text-[#4BB4DE]" />
                       )}
-                      <div>
-                        <p className="text-sm whitespace-pre-wrap">{message.text}</p>
+                      <div className="min-w-0">
+                        <p className="text-xs sm:text-sm whitespace-pre-wrap break-words">{message.text}</p>
                         {message.type === 'action' && renderQuickReplies(message.text)}
                       </div>
                       {message.sender === 'user' && (
-                        <User className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                        <User className="w-3.5 h-3.5 sm:w-4 sm:h-4 mt-0.5 flex-shrink-0 text-[#150734]" />
                       )}
                     </div>
-                    <p className="text-[10px] opacity-50 mt-1">
+                    <p className="text-[8px] sm:text-[10px] opacity-50 mt-1 text-right">
                       {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </p>
                   </div>
@@ -423,11 +433,11 @@ const ChatBot: React.FC = () => {
               
               {isTyping && (
                 <div className="flex justify-start">
-                  <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/20">
+                  <div className="bg-[#4BB4DE]/10 backdrop-blur-sm rounded-2xl p-3 border border-[#4BB4DE]/20">
                     <div className="flex items-center gap-1">
-                      <div className="w-2 h-2 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <div className="w-2 h-2 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <div className="w-2 h-2 bg-white/60 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-[#4BB4DE]/60 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-[#4BB4DE]/60 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-[#4BB4DE]/60 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                     </div>
                   </div>
                 </div>
@@ -436,9 +446,9 @@ const ChatBot: React.FC = () => {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input Area */}
-            <div className="p-4 border-t border-white/20 bg-white/5">
-              <div className="flex gap-2">
+            {/* Input Area - Ocean Theme */}
+            <div className="p-2.5 sm:p-4 border-t border-[#4BB4DE]/20 bg-[#0F2557]/50 flex-shrink-0">
+              <div className="flex gap-1.5 sm:gap-2">
                 <input
                   ref={inputRef}
                   type="text"
@@ -446,18 +456,18 @@ const ChatBot: React.FC = () => {
                   onChange={(e) => setInputText(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder="Type your message..."
-                  className="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/30 focus:border-[#E5E4E2] focus:ring-2 focus:ring-[#E5E4E2]/20 transition-all outline-none"
+                  className="flex-1 px-3 sm:px-4 py-1.5 sm:py-2 bg-[#4BB4DE]/5 border border-[#4BB4DE]/20 rounded-xl text-[#EFDBCB] placeholder-[#EFDBCB]/30 text-xs sm:text-sm focus:border-[#4BB4DE] focus:ring-2 focus:ring-[#4BB4DE]/20 transition-all outline-none min-w-0"
                 />
                 <button
                   onClick={handleSend}
                   disabled={!inputText.trim()}
-                  className="w-10 h-10 bg-gradient-to-r from-[#E5E4E2] to-[#c4b5fd] rounded-xl flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg transition-all"
+                  className="w-8 h-8 sm:w-9 sm:h-10 md:w-10 md:h-10 bg-gradient-to-r from-[#4BB4DE] to-[#63BCE5] rounded-xl flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-[#4BB4DE]/30 transition-all flex-shrink-0"
                 >
-                  <Send className="w-4 h-4 text-[#4b0082]" />
+                  <Send className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#150734]" />
                 </button>
               </div>
-              <p className="text-center text-[10px] text-white/30 mt-3">
-                AI assistant • Your data is encrypted
+              <p className="text-center text-[8px] sm:text-[10px] text-[#EFDBCB]/30 mt-2 sm:mt-3">
+                🌊 Ocean AI • Your data is encrypted
               </p>
             </div>
           </motion.div>
@@ -465,6 +475,10 @@ const ChatBot: React.FC = () => {
       </AnimatePresence>
     </>
   )
+
+  // Use portal to render at the root level
+  if (!mounted) return null
+  return createPortal(chatContent, document.body)
 }
 
 export default ChatBot

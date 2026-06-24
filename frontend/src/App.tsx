@@ -1,8 +1,7 @@
 import './index.css'; // or './App.css'
-
+import { SidebarProvider } from './contexts/SidebarContext'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-// Remove this line - import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { Toaster } from 'react-hot-toast'
 
 // Contexts
@@ -26,7 +25,6 @@ import Verification from './pages/verification/IdentityVerify'
 import Profile from './pages/profile/Profile'
 import Settings from './pages/settings/Settings'
 
-
 // Routes
 import PrivateRoute from './routes/PrivateRoute'
 import AdminRoute from './routes/AdminRoute'
@@ -39,7 +37,6 @@ const queryClient = new QueryClient({
       retry: 1,
       refetchOnWindowFocus: false,
       staleTime: 5 * 60 * 1000, // 5 minutes
-      
     },
   },
 })
@@ -52,73 +49,73 @@ function App() {
           <ErrorBoundary>
             <AuthProvider>
               <NotificationProvider>
-                <Routes>
-                  {/* Public Routes */}
-                  <Route path="/" element={<Home />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/search" element={<SearchItems />} />
-                  <Route path="/items/:id" element={<ItemDetail />} />
-                  <Route path="/about" element={<About />} />
-                  <Route path="/contact" element={<Contact />} />
+                <SidebarProvider>  {/* ← WRAP EVERYTHING WITH SidebarProvider */}
+                  <Routes>
+                    {/* Public Routes */}
+                    <Route path="/" element={<Home />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/search" element={<SearchItems />} />
+                    <Route path="/items/:id" element={<ItemDetail />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/contact" element={<Contact />} />
+                    
+                    {/* Protected Routes */}
+                    <Route element={<PrivateRoute />}>
+                      <Route path="/dashboard" element={<Dashboard />} />
+                      <Route path="/report/lost" element={<ReportLost />} />
+                      <Route path="/report/found" element={<ReportFound />} />
+                      <Route path="/verify" element={<Verification />} />
+                      <Route path="/profile" element={<Profile />} />
+                      <Route path="/settings" element={<Settings />} />
+                      <Route path="/my-items" element={<div>My Items</div>} />
+                      <Route path="/claims" element={<div>My Claims</div>} />
+                      <Route path="/messages" element={<div>Messages</div>} />
+                    </Route>
+                    
+                    {/* Admin Routes */}
+                    <Route element={<AdminRoute />}>
+                      <Route path="/admin" element={<AdminDashboard />} />
+                      <Route path="/admin/users" element={<div>User Management</div>} />
+                      <Route path="/admin/items" element={<div>Item Management</div>} />
+                      <Route path="/admin/verifications" element={<div>Verifications</div>} />
+                      <Route path="/admin/claims" element={<div>Claims Review</div>} />
+                    </Route>
+                    
+                    {/* 404 */}
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Routes>
                   
-                  {/* Protected Routes */}
-                  <Route element={<PrivateRoute />}>
-                    <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/report/lost" element={<ReportLost />} />
-                    <Route path="/report/found" element={<ReportFound />} />
-                    <Route path="/verify" element={<Verification />} />
-                    <Route path="/profile" element={<Profile />} />
-                    <Route path="/settings" element={<Settings />} />
-                    <Route path="/my-items" element={<div>My Items</div>} />
-                    <Route path="/claims" element={<div>My Claims</div>} />
-                    <Route path="/messages" element={<div>Messages</div>} />
-                  </Route>
-                  
-                  {/* Admin Routes */}
-                  <Route element={<AdminRoute />}>
-                    <Route path="/admin" element={<AdminDashboard />} />
-                    <Route path="/admin/users" element={<div>User Management</div>} />
-                    <Route path="/admin/items" element={<div>Item Management</div>} />
-                    <Route path="/admin/verifications" element={<div>Verifications</div>} />
-                    <Route path="/admin/claims" element={<div>Claims Review</div>} />
-                  </Route>
-                  
-                  {/* 404 */}
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-                
-                <Toaster
-                  position="top-right"
-                  toastOptions={{
-                    duration: 4000,
-                    style: {
-                      background: '#363636',
-                      color: '#fff',
-                    },
-                    success: {
-                      duration: 3000,
-                      iconTheme: {
-                        primary: '#10B981',
-                        secondary: '#fff',
+                  <Toaster
+                    position="top-right"
+                    toastOptions={{
+                      duration: 4000,
+                      style: {
+                        background: '#363636',
+                        color: '#fff',
                       },
-                    },
-                    error: {
-                      duration: 5000,
-                      iconTheme: {
-                        primary: '#EF4444',
-                        secondary: '#fff',
+                      success: {
+                        duration: 3000,
+                        iconTheme: {
+                          primary: '#10B981',
+                          secondary: '#fff',
+                        },
                       },
-                    },
-                  }}
-                />
+                      error: {
+                        duration: 5000,
+                        iconTheme: {
+                          primary: '#EF4444',
+                          secondary: '#fff',
+                        },
+                      },
+                    }}
+                  />
+                </SidebarProvider>  {/* ← CLOSE SidebarProvider */}
               </NotificationProvider>
             </AuthProvider>
           </ErrorBoundary>
         </Router>
       </ThemeProvider>
-      
-      {/* Remove this line - <ReactQueryDevtools initialIsOpen={false} /> */}
     </QueryClientProvider>
   )
 }

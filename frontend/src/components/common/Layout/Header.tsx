@@ -19,15 +19,15 @@ import {
   ChevronDown,
   Crown,
   Sparkles,
-  Zap
+  Zap,
+  Waves
 } from 'lucide-react'
 import { useAuth } from '../../../contexts/AuthContext'
-import { useUIStore } from '../../../store/ui.store'
+import { useSidebar } from '../../../contexts/SidebarContext'
 import { useNotifications } from '../../../contexts/NotificationContext'
 import Button from '../UI/Button'
-import Input from '../UI/Input'
 
-// ========== 3D BACKGROUND FOR HEADER - UPDATED COLORS ==========
+// ========== 🌊 OCEAN 3D BACKGROUND FOR HEADER ==========
 const Header3DEffect: React.FC = () => {
   const groupRef = useRef<any>(null)
   
@@ -42,12 +42,12 @@ const Header3DEffect: React.FC = () => {
       <Float speed={0.8} rotationIntensity={0.3} floatIntensity={0.5} position={[-2, -1, -5]}>
         <Sphere args={[0.3, 32, 32]}>
           <MeshDistortMaterial 
-            color="#1C448E"
+            color="#345DA7"
             distort={0.3}
             speed={1}
             roughness={0.2}
             metalness={0.85}
-            emissive="#0F2A5E"
+            emissive="#0F2557"
             emissiveIntensity={0.5}
           />
         </Sphere>
@@ -56,26 +56,26 @@ const Header3DEffect: React.FC = () => {
       <Float speed={1} rotationIntensity={0.4} floatIntensity={0.6} position={[2.5, -0.5, -4]}>
         <Sphere args={[0.25, 32, 32]}>
           <MeshDistortMaterial 
-            color="#F4FDFF"
+            color="#4BB4DE"
             distort={0.4}
             speed={1.2}
             roughness={0.15}
             metalness={0.9}
-            emissive="#938BA1"
+            emissive="#63BCE5"
             emissiveIntensity={0.4}
           />
         </Sphere>
       </Float>
       
-      <ThreeSparkles count={50} scale={[5, 5, 5]} size={0.04} speed={0.3} color="#F4FDFF" />
+      <ThreeSparkles count={50} scale={[5, 5, 5]} size={0.04} speed={0.3} color="#7ED5EA" />
     </group>
   )
 }
 
-// ========== HEADER COMPONENT - REFRESHED ==========
+// ========== HEADER COMPONENT - OCEAN THEME ==========
 const Header: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth()
-  const { toggleSidebar, sidebarOpen } = useUIStore()
+  const { isOpen: sidebarOpen, toggleSidebar } = useSidebar()
   const { notifications, unreadCount, markAllAsRead } = useNotifications()
   const [showNotifications, setShowNotifications] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -144,46 +144,51 @@ const Header: React.FC = () => {
         transition={{ duration: 0.6, type: "spring" }}
         className={`sticky top-0 z-50 transition-all duration-300 ${
           scrolled 
-            ? 'bg-[#1C448E]/95 backdrop-blur-xl shadow-2xl' 
-            : 'bg-gradient-to-r from-[#1C448E] via-[#0F2A5E] to-[#1C448E]'
-        } border-b border-[#F4FDFF]/10`}
+            ? 'bg-[#0F2557]/95 backdrop-blur-xl shadow-2xl' 
+            : 'bg-gradient-to-r from-[#150734] via-[#0F2557] to-[#345DA7]'
+        } border-b border-[#4BB4DE]/10`}
       >
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
+        <div className="container mx-auto px-2 sm:px-4">
+          <div className="flex items-center justify-between h-14 sm:h-16">
+            
             {/* Left section - Logo and navigation */}
-            <div className="flex items-center space-x-4">
-              <motion.button
-                whileHover={{ scale: 1.05, rotate: 180 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={toggleSidebar}
-                className="p-2 rounded-md text-[#F4FDFF]/70 hover:text-[#F4FDFF] hover:bg-[#F4FDFF]/10 lg:hidden transition-all duration-300"
-              >
-                {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
-              </motion.button>
+            <div className="flex items-center gap-1 sm:gap-2 md:gap-4 min-w-0">
               
+              {/* Mobile Menu Button */}
+              <button
+                onClick={toggleSidebar}
+                className="p-1.5 sm:p-2 rounded-md text-[#4BB4DE]/70 hover:text-[#4BB4DE] hover:bg-[#4BB4DE]/10 lg:hidden transition-all duration-300 flex-shrink-0"
+                aria-label="Toggle sidebar"
+              >
+                {sidebarOpen ? <X size={18} className="sm:w-5 sm:h-5" /> : <Menu size={18} className="sm:w-5 sm:h-5" />}
+              </button>
+              
+              {/* Logo */}
               <motion.div
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
+                className="flex-shrink-0"
               >
-                <Link to="/" className="flex items-center space-x-2">
+                <Link to="/" className="flex items-center gap-1 sm:gap-2">
                   <motion.div
                     animate={{ rotate: [0, 10, -10, 0] }}
                     transition={{ duration: 0.5, delay: 0.5 }}
+                    className="flex-shrink-0"
                   >
-                    <Shield className="text-[#F4FDFF]" size={28} />
+                    <Shield className="text-[#4BB4DE]" size={22} />
                   </motion.div>
-                  <div className="hidden sm:block">
-                    <span className="text-xl font-bold bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] bg-clip-text text-transparent">
+                  <div className="hidden xs:block">
+                    <span className="text-base sm:text-lg md:text-xl font-bold bg-gradient-to-r from-[#4BB4DE] to-[#63BCE5] bg-clip-text text-transparent">
                       Secure
                     </span>
-                    <span className="text-xl font-bold text-[#F4FDFF]">Finder</span>
+                    <span className="text-base sm:text-lg md:text-xl font-bold text-[#EFDBCB]">Finder</span>
                   </div>
-                  <Crown className="w-4 h-4 text-[#938BA1] animate-pulse" />
+                  <Crown className="w-3 h-3 sm:w-4 sm:h-4 text-[#7ED5EA] animate-pulse flex-shrink-0" />
                 </Link>
               </motion.div>
               
-              {/* Navigation links for desktop */}
-              <nav className="hidden md:flex items-center space-x-1 ml-6">
+              {/* Navigation links - Desktop */}
+              <nav className="hidden md:flex items-center gap-0.5 ml-2 lg:ml-4">
                 {navItems.map((item, index) => (
                   <motion.div
                     key={item.name}
@@ -193,39 +198,38 @@ const Header: React.FC = () => {
                   >
                     <Link
                       to={item.path}
-                      className="text-[#F4FDFF]/80 hover:text-[#F4FDFF] px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:bg-[#F4FDFF]/10 flex items-center gap-2 group"
+                      className="text-[#EFDBCB]/70 hover:text-[#EFDBCB] px-2 lg:px-3 py-1.5 rounded-lg text-xs lg:text-sm font-medium transition-all duration-300 hover:bg-[#4BB4DE]/10 flex items-center gap-1.5 group whitespace-nowrap"
                     >
-                      <item.icon size={16} className="group-hover:scale-110 transition-transform" />
-                      {item.name}
+                      <item.icon size={14} className="group-hover:scale-110 transition-transform flex-shrink-0" />
+                      <span className="hidden lg:inline">{item.name}</span>
                     </Link>
                   </motion.div>
                 ))}
               </nav>
             </div>
             
-            {/* Center section - Search */}
+            {/* Center section - Search (Hidden on mobile, visible on tablet+) */}
             <motion.div 
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2 }}
-              className="flex-1 max-w-md mx-4"
+              className="hidden sm:block flex-1 max-w-xs lg:max-w-md mx-2 md:mx-3 lg:mx-4"
             >
               <form onSubmit={handleSearch} className="relative">
                 <motion.div
                   animate={{ scale: searchFocused ? 1.02 : 1 }}
                   transition={{ duration: 0.2 }}
+                  className="relative"
                 >
-                  <Input
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4BB4DE]/40 w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  <input
                     type="text"
-                    placeholder="Search for lost items..."
+                    placeholder="Search items..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onFocus={() => setSearchFocused(true)}
                     onBlur={() => setSearchFocused(false)}
-                    isSearch
-                    size="sm"
-                    fullWidth
-                    className="bg-[#F4FDFF]/10 border-[#F4FDFF]/20 text-[#F4FDFF] placeholder-[#F4FDFF]/50 focus:border-[#F4FDFF] focus:ring-[#F4FDFF]/20"
+                    className="w-full pl-8 sm:pl-9 pr-3 py-1.5 sm:py-2 text-xs sm:text-sm bg-[#4BB4DE]/5 border border-[#4BB4DE]/15 rounded-xl text-[#EFDBCB] placeholder-[#EFDBCB]/30 focus:border-[#4BB4DE] focus:ring-2 focus:ring-[#4BB4DE]/20 transition-all outline-none"
                   />
                 </motion.div>
                 <AnimatePresence>
@@ -234,9 +238,11 @@ const Header: React.FC = () => {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 10 }}
-                      className="absolute top-full left-0 right-0 mt-2 bg-[#1C448E]/90 backdrop-blur-xl rounded-xl p-2 border border-[#F4FDFF]/20 z-50"
+                      className="absolute top-full left-0 right-0 mt-1 sm:mt-2 bg-[#0F2557]/95 backdrop-blur-xl rounded-xl p-2 border border-[#4BB4DE]/20 z-50"
                     >
-                      <div className="text-xs text-[#F4FDFF]/60 p-2">Popular searches: lost keys, wallet, phone</div>
+                      <div className="text-[10px] sm:text-xs text-[#EFDBCB]/50 p-1.5 sm:p-2">
+                        Popular: lost keys, wallet, phone
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -244,24 +250,29 @@ const Header: React.FC = () => {
             </motion.div>
             
             {/* Right section - User actions */}
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center gap-1 sm:gap-2 md:gap-3 flex-shrink-0">
+              
+              {/* Mobile Search Button */}
+              <button
+                onClick={() => navigate('/search')}
+                className="sm:hidden p-1.5 rounded-full text-[#4BB4DE]/60 hover:text-[#4BB4DE] hover:bg-[#4BB4DE]/10 transition-all duration-300"
+                aria-label="Search"
+              >
+                <Search size={18} />
+              </button>
+              
               {/* Notifications */}
               <div className="relative">
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
+                <button
                   onClick={() => setShowNotifications(!showNotifications)}
-                  className="p-2 rounded-full text-[#F4FDFF]/70 hover:text-[#F4FDFF] hover:bg-[#F4FDFF]/10 relative transition-all duration-300"
+                  className="p-1.5 sm:p-2 rounded-full text-[#EFDBCB]/60 hover:text-[#EFDBCB] hover:bg-[#4BB4DE]/10 relative transition-all duration-300"
+                  aria-label="Notifications"
                 >
-                  <Bell size={20} />
+                  <Bell size={18} className="sm:w-5 sm:h-5" />
                   {unreadCount > 0 && (
-                    <motion.span 
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="absolute top-1 right-1 w-2.5 h-2.5 bg-gradient-to-r from-[#1C448E] to-[#938BA1] rounded-full"
-                    />
+                    <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-gradient-to-r from-[#4BB4DE] to-[#63BCE5] rounded-full" />
                   )}
-                </motion.button>
+                </button>
                 
                 {/* Notifications dropdown */}
                 <AnimatePresence>
@@ -271,66 +282,62 @@ const Header: React.FC = () => {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
                       transition={{ duration: 0.2 }}
-                      className="absolute right-0 mt-2 w-80 bg-gradient-to-br from-[#1C448E] to-[#0F2A5E] backdrop-blur-xl rounded-xl shadow-2xl border border-[#F4FDFF]/20 z-50"
+                      className="absolute right-0 mt-2 w-72 sm:w-80 bg-gradient-to-br from-[#0F2557] to-[#150734] backdrop-blur-xl rounded-xl shadow-2xl border border-[#4BB4DE]/20 z-50 max-h-[80vh] overflow-y-auto"
                     >
-                      <div className="p-4 border-b border-[#F4FDFF]/20">
+                      <div className="p-3 sm:p-4 border-b border-[#4BB4DE]/10">
                         <div className="flex items-center justify-between">
-                          <h3 className="font-semibold text-[#F4FDFF]">Notifications</h3>
+                          <h3 className="font-semibold text-[#EFDBCB] text-sm sm:text-base">Notifications</h3>
                           {unreadCount > 0 && (
-                            <motion.button
-                              whileHover={{ scale: 1.02 }}
+                            <button
                               onClick={markAllAsRead}
-                              className="text-xs text-[#938BA1] hover:text-[#F4FDFF] transition-colors"
+                              className="text-[10px] sm:text-xs text-[#4BB4DE] hover:text-[#63BCE5] transition-colors"
                             >
-                              Mark all as read
-                            </motion.button>
+                              Mark all read
+                            </button>
                           )}
                         </div>
                       </div>
                       
-                      <div className="max-h-96 overflow-y-auto">
+                      <div className="max-h-64 sm:max-h-80 overflow-y-auto">
                         {notifications.length === 0 ? (
-                          <div className="p-4 text-center text-[#F4FDFF]/50 text-sm">
+                          <div className="p-4 text-center text-[#EFDBCB]/40 text-xs sm:text-sm">
                             No notifications
                           </div>
                         ) : (
                           notifications.slice(0, 5).map((notification, idx) => (
-                            <motion.div
+                            <div
                               key={notification.id}
-                              initial={{ opacity: 0, x: -20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: idx * 0.05 }}
-                              className={`p-4 border-b border-[#F4FDFF]/10 hover:bg-[#F4FDFF]/5 cursor-pointer transition-all duration-300 ${
-                                !notification.read ? 'bg-[#F4FDFF]/5' : ''
+                              className={`p-3 sm:p-4 border-b border-[#4BB4DE]/5 hover:bg-[#4BB4DE]/5 cursor-pointer transition-all duration-300 ${
+                                !notification.read ? 'bg-[#4BB4DE]/5' : ''
                               }`}
                             >
-                              <div className="flex items-start space-x-3">
-                                <div className={`p-2 rounded-full ${
-                                  notification.type === 'success' ? 'bg-[#938BA1]/20 text-[#938BA1]' :
+                              <div className="flex items-start gap-2 sm:gap-3">
+                                <div className={`p-1.5 sm:p-2 rounded-full flex-shrink-0 ${
+                                  notification.type === 'success' ? 'bg-[#4BB4DE]/20 text-[#4BB4DE]' :
                                   notification.type === 'error' ? 'bg-red-500/20 text-red-400' :
-                                  'bg-[#1C448E]/20 text-[#1C448E]'
+                                  'bg-[#345DA7]/20 text-[#345DA7]'
                                 }`}>
                                   {notification.type === 'success' ? '✓' :
                                    notification.type === 'error' ? '✗' : 'ℹ'}
                                 </div>
-                                <div className="flex-1">
-                                  <p className="font-medium text-[#F4FDFF] text-sm">{notification.title}</p>
-                                  <p className="text-xs text-[#F4FDFF]/60 mt-1">{notification.message}</p>
-                                  <p className="text-xs text-[#F4FDFF]/40 mt-2">
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-medium text-[#EFDBCB] text-xs sm:text-sm truncate">{notification.title}</p>
+                                  <p className="text-[10px] sm:text-xs text-[#EFDBCB]/50 mt-0.5 line-clamp-2">{notification.message}</p>
+                                  <p className="text-[10px] text-[#EFDBCB]/30 mt-1">
                                     {new Date(notification.timestamp).toLocaleTimeString()}
                                   </p>
                                 </div>
                               </div>
-                            </motion.div>
+                            </div>
                           ))
                         )}
                       </div>
                       
                       {notifications.length > 5 && (
-                        <div className="p-4 border-t border-[#F4FDFF]/20 text-center">
+                        <div className="p-3 sm:p-4 border-t border-[#4BB4DE]/10 text-center">
                           <Link
                             to="/notifications"
-                            className="text-xs text-[#938BA1] hover:text-[#F4FDFF] transition-colors"
+                            className="text-[10px] sm:text-xs text-[#4BB4DE] hover:text-[#63BCE5] transition-colors"
                           >
                             View all notifications
                           </Link>
@@ -344,27 +351,26 @@ const Header: React.FC = () => {
               {/* User profile or auth buttons */}
               {isAuthenticated && user ? (
                 <div className="relative">
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
+                  <button
                     onClick={() => setShowUserMenu(!showUserMenu)}
-                    className="flex items-center space-x-2 p-1.5 rounded-full hover:bg-[#F4FDFF]/10 transition-all duration-300"
+                    className="flex items-center gap-1 sm:gap-2 p-1 rounded-full hover:bg-[#4BB4DE]/10 transition-all duration-300"
+                    aria-label="User menu"
                   >
                     {hasProfileImage() ? (
                       <img
                         src={(user as any).profileImage}
                         alt={user.fullName || 'User'}
-                        className="w-8 h-8 rounded-full object-cover border-2 border-[#F4FDFF]"
+                        className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border-2 border-[#4BB4DE]"
                       />
                     ) : (
-                      <div className="w-8 h-8 bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] rounded-full flex items-center justify-center">
-                        <span className="text-[#1C448E] font-bold text-sm">
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-r from-[#4BB4DE] to-[#63BCE5] rounded-full flex items-center justify-center">
+                        <span className="text-[#150734] font-bold text-xs sm:text-sm">
                           {getUserInitials()}
                         </span>
                       </div>
                     )}
-                    <ChevronDown size={14} className="text-[#F4FDFF]/70" />
-                  </motion.button>
+                    <ChevronDown size={12} className="text-[#EFDBCB]/50 hidden sm:block" />
+                  </button>
                   
                   {/* User dropdown menu */}
                   <AnimatePresence>
@@ -374,71 +380,63 @@ const Header: React.FC = () => {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
                         transition={{ duration: 0.2 }}
-                        className="absolute right-0 mt-2 w-56 bg-gradient-to-br from-[#1C448E] to-[#0F2A5E] backdrop-blur-xl rounded-xl shadow-2xl border border-[#F4FDFF]/20 z-50"
+                        className="absolute right-0 mt-2 w-48 sm:w-56 bg-gradient-to-br from-[#0F2557] to-[#150734] backdrop-blur-xl rounded-xl shadow-2xl border border-[#4BB4DE]/20 z-50"
                       >
-                        <div className="p-2">
-                          <div className="px-4 py-3 border-b border-[#F4FDFF]/20 mb-2">
-                            <p className="text-[#F4FDFF] font-semibold text-sm">{user.fullName || 'User'}</p>
-                            <p className="text-[#F4FDFF]/50 text-xs mt-1">{user.email}</p>
+                        <div className="p-1.5 sm:p-2">
+                          <div className="px-3 sm:px-4 py-2 sm:py-3 border-b border-[#4BB4DE]/10 mb-1 sm:mb-2">
+                            <p className="text-[#EFDBCB] font-semibold text-xs sm:text-sm truncate">{user.fullName || 'User'}</p>
+                            <p className="text-[#EFDBCB]/40 text-[10px] sm:text-xs mt-0.5 truncate">{user.email}</p>
                           </div>
-                          <motion.button
-                            whileHover={{ x: 5 }}
+                          <button
                             onClick={() => {
                               navigate('/profile')
                               setShowUserMenu(false)
                             }}
-                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[#F4FDFF]/80 hover:text-[#F4FDFF] hover:bg-[#F4FDFF]/10 rounded-lg transition-all duration-300"
+                            className="w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-[#EFDBCB]/70 hover:text-[#EFDBCB] hover:bg-[#4BB4DE]/10 rounded-lg transition-all duration-300"
                           >
-                            <UserCircle size={16} />
+                            <UserCircle size={14} className="sm:w-4 sm:h-4" />
                             Profile
-                          </motion.button>
-                          <motion.button
-                            whileHover={{ x: 5 }}
+                          </button>
+                          <button
                             onClick={() => {
                               navigate('/dashboard')
                               setShowUserMenu(false)
                             }}
-                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[#F4FDFF]/80 hover:text-[#F4FDFF] hover:bg-[#F4FDFF]/10 rounded-lg transition-all duration-300"
+                            className="w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-[#EFDBCB]/70 hover:text-[#EFDBCB] hover:bg-[#4BB4DE]/10 rounded-lg transition-all duration-300"
                           >
-                            <LayoutDashboard size={16} />
+                            <LayoutDashboard size={14} className="sm:w-4 sm:h-4" />
                             Dashboard
-                          </motion.button>
-                          <motion.button
-                            whileHover={{ x: 5 }}
+                          </button>
+                          <button
                             onClick={() => {
                               navigate('/settings')
                               setShowUserMenu(false)
                             }}
-                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[#F4FDFF]/80 hover:text-[#F4FDFF] hover:bg-[#F4FDFF]/10 rounded-lg transition-all duration-300"
+                            className="w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-[#EFDBCB]/70 hover:text-[#EFDBCB] hover:bg-[#4BB4DE]/10 rounded-lg transition-all duration-300"
                           >
-                            <Settings size={16} />
+                            <Settings size={14} className="sm:w-4 sm:h-4" />
                             Settings
-                          </motion.button>
-                          <hr className="my-2 border-[#F4FDFF]/20" />
-                          <motion.button
-                            whileHover={{ x: 5 }}
+                          </button>
+                          <hr className="my-1 sm:my-2 border-[#4BB4DE]/10" />
+                          <button
                             onClick={handleLogout}
-                            className="w-full flex items-center gap-3 px-4 py-2 text-sm text-[#938BA1] hover:text-[#F4FDFF] hover:bg-[#F4FDFF]/10 rounded-lg transition-all duration-300"
+                            className="w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm text-[#4BB4DE]/60 hover:text-[#EFDBCB] hover:bg-[#4BB4DE]/10 rounded-lg transition-all duration-300"
                           >
-                            <LogOut size={16} />
+                            <LogOut size={14} className="sm:w-4 sm:h-4" />
                             Logout
-                          </motion.button>
+                          </button>
                         </div>
                       </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
               ) : (
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="flex items-center space-x-2"
-                >
+                <div className="flex items-center gap-1 sm:gap-2">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => navigate('/login')}
-                    className="border-[#F4FDFF]/30 text-[#F4FDFF] hover:bg-[#F4FDFF]/10 hover:border-[#F4FDFF]/50"
+                    className="border-[#4BB4DE]/30 text-[#EFDBCB] hover:bg-[#4BB4DE]/10 hover:border-[#4BB4DE]/50 text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-1.5"
                   >
                     Login
                   </Button>
@@ -446,38 +444,35 @@ const Header: React.FC = () => {
                     variant="primary"
                     size="sm"
                     onClick={() => navigate('/register')}
-                    className="bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] text-[#1C448E] hover:shadow-lg"
+                    className="bg-gradient-to-r from-[#4BB4DE] to-[#63BCE5] text-[#150734] hover:shadow-lg hover:shadow-[#4BB4DE]/20 text-xs sm:text-sm px-2 sm:px-3 py-1 sm:py-1.5"
                   >
-                    Sign Up
-                    <Sparkles size={14} className="ml-1" />
+                    <span className="hidden xs:inline">Sign Up</span>
+                    <span className="xs:hidden">Sign Up</span>
+                    <Sparkles size={12} className="ml-0.5 sm:ml-1" />
                   </Button>
-                </motion.div>
+                </div>
               )}
               
-              {/* Report button */}
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="hidden md:block"
-              >
+              {/* Report button - Desktop only */}
+              <div className="hidden lg:block">
                 <Button
                   variant="primary"
                   size="sm"
                   onClick={() => navigate('/report/lost')}
-                  className="bg-gradient-to-r from-[#938BA1] to-[#1C448E] text-[#F4FDFF] hover:shadow-lg"
+                  className="bg-gradient-to-r from-[#4BB4DE] to-[#63BCE5] text-[#150734] hover:shadow-lg hover:shadow-[#4BB4DE]/20 text-sm px-4 py-1.5"
                 >
                   <PlusCircle size={14} className="mr-1" />
                   Report Item
                 </Button>
-              </motion.div>
+              </div>
             </div>
           </div>
         </div>
         
         {/* Animated gradient bottom border */}
         <motion.div 
-          className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#F4FDFF] to-transparent"
-          animate={{ opacity: [0.3, 0.6, 0.3] }}
+          className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#4BB4DE] to-transparent"
+          animate={{ opacity: [0.2, 0.6, 0.2] }}
           transition={{ duration: 3, repeat: Infinity }}
         />
       </motion.header>
