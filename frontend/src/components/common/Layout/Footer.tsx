@@ -297,7 +297,7 @@ const Footer: React.FC = () => {
                 whileHover={{ x: 5 }}
               >
                 <MapPin size={14} className="text-[#4BB4DE] mt-0.5 flex-shrink-0" />
-                <span className="break-words">123 Security Street, Tech City</span>
+                <span className="break-words">Caleb University, Lagos Nigeria.</span>
               </motion.li>
               <motion.li 
                 className="flex items-center gap-2 sm:gap-3 text-[#EFDBCB]/60 text-xs sm:text-sm"
@@ -305,7 +305,7 @@ const Footer: React.FC = () => {
               >
                 <Phone size={14} className="text-[#4BB4DE] flex-shrink-0" />
                 <a href="tel:+1234567890" className="hover:text-[#EFDBCB] transition-colors">
-                  +1 (234) 567-890
+                  +234 811 305 2127
                 </a>
               </motion.li>
               <motion.li 
@@ -314,7 +314,7 @@ const Footer: React.FC = () => {
               >
                 <Mail size={14} className="text-[#4BB4DE] flex-shrink-0" />
                 <a href="mailto:support@securefinder.com" className="hover:text-[#EFDBCB] transition-colors break-all">
-                  support@securefinder.com
+                  Agboolacatherine2026@gmail.com
                 </a>
               </motion.li>
               <motion.li 

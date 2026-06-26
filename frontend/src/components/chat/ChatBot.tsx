@@ -58,7 +58,7 @@ const ChatBot: React.FC = () => {
     if (messages.length === 0) {
       const greeting: Message = {
         id: '1',
-        text: "🌊 Hello! I'm your Ocean AI assistant. How can I help you today?",
+        text: "🌊 Hello! I'm your Secure AI assistant. How can I help you today?",
         sender: 'bot',
         timestamp: new Date(),
         type: 'text'
@@ -208,7 +208,7 @@ const ChatBot: React.FC = () => {
     }
     // General greeting
     else if (lowerMessage.includes('hello') || lowerMessage.includes('hi') || lowerMessage.includes('hey')) {
-      await simulateTyping("🌊 Hey there! I'm your Ocean AI assistant. I can help you with:\n\n🔍 Finding lost/found items\n✅ Verification process\n💬 Claims and messages\n📊 Dashboard navigation\n🎯 Search tips\n\nWhat would you like to know?")
+      await simulateTyping("🌊 Hey there! I'm your Secure AI assistant. I can help you with:\n\n🔍 Finding lost/found items\n✅ Verification process\n💬 Claims and messages\n📊 Dashboard navigation\n🎯 Search tips\n\nWhat would you like to know?")
       addQuickReplies([
         { text: '🔍 Find my lost item', action: 'search' },
         { text: '📝 Report an item', action: 'report' },
@@ -376,14 +376,14 @@ const ChatBot: React.FC = () => {
             className="fixed bottom-20 sm:bottom-24 right-4 sm:right-6 z-[99999] w-[92vw] sm:w-[90vw] md:w-[400px] max-w-md h-[500px] sm:h-[550px] md:h-[600px] bg-gradient-to-br from-[#150734] via-[#0F2557] to-[#345DA7] rounded-2xl shadow-2xl shadow-[#4BB4DE]/20 border border-[#4BB4DE]/20 flex flex-col overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header - Ocean Theme */}
+            {/* Header - Secure Theme */}
             <div className="bg-gradient-to-r from-[#4BB4DE] to-[#63BCE5] p-3 sm:p-4 flex items-center justify-between flex-shrink-0">
               <div className="flex items-center gap-2 sm:gap-3 min-w-0">
                 <div className="w-8 h-8 sm:w-9 sm:h-10 bg-[#150734] rounded-full flex items-center justify-center flex-shrink-0">
                   <Bot className="w-4 h-4 sm:w-5 sm:h-5 text-[#4BB4DE]" />
                 </div>
                 <div className="min-w-0">
-                  <h3 className="font-bold text-[#150734] text-sm sm:text-base truncate">Ocean AI</h3>
+                  <h3 className="font-bold text-[#150734] text-sm sm:text-base truncate">Secure AI</h3>
                   <p className="text-[10px] sm:text-xs text-[#150734]/70 flex items-center gap-1">
                     <span className="w-1.5 h-1.5 bg-green-400 rounded-full inline-block animate-pulse" />
                     Online • 24/7
@@ -398,7 +398,7 @@ const ChatBot: React.FC = () => {
               </button>
             </div>
 
-            {/* Messages - Ocean Theme */}
+            {/* Messages - Secure Theme */}
             <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-2 sm:space-y-3">
               {messages.map((message) => (
                 <div
@@ -446,7 +446,7 @@ const ChatBot: React.FC = () => {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Input Area - Ocean Theme */}
+            {/* Input Area - Secure Theme */}
             <div className="p-2.5 sm:p-4 border-t border-[#4BB4DE]/20 bg-[#0F2557]/50 flex-shrink-0">
               <div className="flex gap-1.5 sm:gap-2">
                 <input
@@ -467,7 +467,7 @@ const ChatBot: React.FC = () => {
                 </button>
               </div>
               <p className="text-center text-[8px] sm:text-[10px] text-[#EFDBCB]/30 mt-2 sm:mt-3">
-                🌊 Ocean AI • Your data is encrypted
+                🌊 Secure AI • Your data is encrypted
               </p>
             </div>
           </motion.div>

@@ -8,6 +8,7 @@ import Button from '../common/UI/Button'
 import Input from '../common/UI/Input'
 import toast from 'react-hot-toast'
 
+// Define the schema
 const resetPasswordSchema = yup.object({
   password: yup
     .string()
@@ -22,7 +23,13 @@ const resetPasswordSchema = yup.object({
     .oneOf([yup.ref('password')], 'Passwords must match'),
 })
 
+// Define the type from the schema
 type ResetPasswordFormData = yup.InferType<typeof resetPasswordSchema>
+
+// Fix: Ensure the fields are required by using a mapped type
+type RequiredResetPasswordFormData = {
+  [K in keyof ResetPasswordFormData]: NonNullable<ResetPasswordFormData[K]>
+}
 
 const ResetPassword: React.FC = () => {
   const { token } = useParams<{ token: string }>()
@@ -35,15 +42,14 @@ const ResetPassword: React.FC = () => {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<ResetPasswordFormData>({
-    resolver: yupResolver(resetPasswordSchema),
+  } = useForm<RequiredResetPasswordFormData>({
+    resolver: yupResolver(resetPasswordSchema) as any, // Type assertion to bypass the strict check
   })
 
-  const onSubmit = async (formData: ResetPasswordFormData) => {
+  const onSubmit = async (formData: RequiredResetPasswordFormData) => {
     try {
       setIsLoading(true)
       // TODO: Implement API call with token
-      // The token should be sent to the backend for verification
       console.log('Reset token:', token)
       console.log('New password data:', formData)
       
@@ -85,7 +91,7 @@ const ResetPassword: React.FC = () => {
                   {...register('password')}
                   error={errors.password?.message}
                   placeholder="••••••••"
-                  className="pl-10 pr-10" // Add padding for icons
+                  className="pl-10 pr-10"
                 />
                 <button
                   type="button"
@@ -113,7 +119,7 @@ const ResetPassword: React.FC = () => {
                   {...register('confirmPassword')}
                   error={errors.confirmPassword?.message}
                   placeholder="••••••••"
-                  className="pl-10 pr-10" // Add padding for icons
+                  className="pl-10 pr-10"
                 />
                 <button
                   type="button"

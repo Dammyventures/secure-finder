@@ -5,226 +5,19 @@ import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import { Link, useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
-import { motion } from 'framer-motion'
-import { Canvas, useFrame } from '@react-three/fiber'
-import { 
-  Sphere, 
-  MeshDistortMaterial, 
-  Float, 
-  Stars, 
-  Sparkles, 
-  TorusKnot, 
-  Ring, 
-  Octahedron,
-  Points,
-  PointMaterial
-} from '@react-three/drei'
+import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { 
   Mail, Lock, User, Phone, IdCard, CheckCircle, Eye, EyeOff, 
-  AlertCircle, Shield, Crown, Diamond, ArrowRight,
-  Award, Heart, Globe, Zap, Bell, Clock, Users
+  AlertCircle, Shield, Crown, Diamond, ArrowRight, Award, 
+  Heart, Globe, Zap, Bell, Clock, Users, Upload, X, FileCheck,
+  Loader2, Check
 } from 'lucide-react'
 
 import { authApi } from '../../api/auth.api'
 import type { RegisterData } from '../../types/auth.types'
 
-// ========== ✨ NEW: COSMIC PARTICLE GALAXY FOR REGISTER ==========
-const RegisterParticleGalaxy: React.FC = () => {
-  const pointsRef = useRef<any>(null)
-  const galaxyRef = useRef<any>(null)
-  const [particlePositions] = useState(() => {
-    const positions = new Float32Array(2500 * 3)
-    for (let i = 0; i < 2500; i++) {
-      const radius = 1.5 + Math.random() * 5
-      const theta = Math.random() * Math.PI * 2
-      const phi = Math.acos((Math.random() * 2) - 1)
-      
-      positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta)
-      positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta) * 0.5
-      positions[i * 3 + 2] = radius * Math.cos(phi)
-    }
-    return positions
-  })
-
-  const [colorPositions] = useState(() => {
-    const colors = new Float32Array(2500 * 3)
-    const palette = [
-      [0.956, 0.992, 1.0],   // #F4FDFF
-      [0.11, 0.267, 0.557],   // #1C448E
-      [0.576, 0.545, 0.631],  // #938BA1
-      [0.956, 0.992, 1.0],   // #F4FDFF
-    ]
-    for (let i = 0; i < 2500; i++) {
-      const c = palette[Math.floor(Math.random() * palette.length)]
-      colors[i * 3] = c[0]
-      colors[i * 3 + 1] = c[1]
-      colors[i * 3 + 2] = c[2]
-    }
-    return colors
-  })
-
-  useFrame(({ clock }) => {
-    const t = clock.getElapsedTime()
-    if (pointsRef.current) {
-      pointsRef.current.rotation.y = t * 0.012
-      pointsRef.current.rotation.x = Math.sin(t * 0.018) * 0.04
-    }
-    if (galaxyRef.current) {
-      galaxyRef.current.rotation.y = t * 0.015
-      galaxyRef.current.rotation.x = Math.sin(t * 0.012) * 0.02
-    }
-  })
-
-  return (
-    <group ref={galaxyRef}>
-      {/* Main Particle Galaxy */}
-      <Points ref={pointsRef} positions={particlePositions} colors={colorPositions} stride={3}>
-        <PointMaterial
-          transparent
-          opacity={0.7}
-          size={0.03}
-          sizeAttenuation
-          blending={2}
-          depthWrite={false}
-        />
-      </Points>
-
-      {/* Core Orb - Different shape for Register */}
-      <Float speed={1.4} rotationIntensity={0.6} floatIntensity={0.9}>
-        <TorusKnot args={[0.7, 0.15, 128, 16, 2, 3]}>
-          <MeshDistortMaterial
-            color="#1C448E"
-            distort={0.3}
-            speed={1.2}
-            roughness={0.05}
-            metalness={0.95}
-            emissive="#938BA1"
-            emissiveIntensity={0.9}
-            transparent
-            opacity={0.7}
-          />
-        </TorusKnot>
-      </Float>
-
-      {/* Inner Glow Ring */}
-      <Ring args={[1.0, 1.2, 64]} position={[0, 0, 0]} rotation={[Math.PI / 4, 0.3, 0]}>
-        <meshStandardMaterial
-          color="#F4FDFF"
-          emissive="#1C448E"
-          emissiveIntensity={0.3}
-          metalness={0.9}
-          transparent
-          opacity={0.4}
-        />
-      </Ring>
-
-      {/* Dual Orbiting Rings */}
-      {[1, 2].map((i) => {
-        const radius = 1.6 + i * 0.5
-        return (
-          <Float key={i} speed={0.4 + i * 0.1} rotationIntensity={0.3} floatIntensity={0.4}>
-            <Ring
-              args={[radius, radius + 0.04, 80]}
-              position={[0, 0, 0]}
-              rotation={[Math.PI / 3 + i * 0.5, i * 0.4, 0]}
-            >
-              <meshStandardMaterial
-                color={i === 1 ? "#938BA1" : "#1C448E"}
-                emissive={i === 1 ? "#F4FDFF" : "#938BA1"}
-                emissiveIntensity={0.1}
-                metalness={0.8}
-                transparent
-                opacity={0.2}
-                wireframe={i === 2}
-              />
-            </Ring>
-          </Float>
-        )
-      })}
-
-      {/* Floating Diamond Orbs */}
-      {[...Array(10)].map((_, i) => {
-        const angle = (i / 10) * Math.PI * 2
-        const radius = 2.0 + Math.random() * 1.8
-        const height = (Math.random() - 0.5) * 2.5
-        return (
-          <Float
-            key={i + 100}
-            speed={0.5 + Math.random() * 0.4}
-            rotationIntensity={1.2}
-            floatIntensity={1}
-            position={[
-              Math.cos(angle + i * 0.4) * radius,
-              height,
-              Math.sin(angle + i * 0.4) * radius
-            ]}
-          >
-            <Sphere args={[0.05 + Math.random() * 0.05, 16, 16]}>
-              <MeshDistortMaterial
-                color={i % 3 === 0 ? "#F4FDFF" : i % 3 === 1 ? "#938BA1" : "#1C448E"}
-                distort={0.6}
-                speed={2.5}
-                metalness={0.9}
-                emissive={i % 3 === 0 ? "#F4FDFF" : "#938BA1"}
-                emissiveIntensity={0.4}
-              />
-            </Sphere>
-          </Float>
-        )
-      })}
-
-      <Sparkles count={500} scale={[10, 10, 10]} size={0.04} speed={0.4} color="#F4FDFF" />
-      <Stars radius={18} depth={70} count={2000} factor={5} fade />
-    </group>
-  )
-}
-
-// ========== 🌊 NEW: FLUID AURA BACKGROUND ==========
-const FluidAuraBackground: React.FC = () => {
-  const groupRef = useRef<any>(null)
-
-  useFrame(({ clock }) => {
-    if (groupRef.current) {
-      groupRef.current.position.y = Math.sin(clock.getElapsedTime() * 0.2) * 0.15
-      groupRef.current.rotation.z = Math.sin(clock.getElapsedTime() * 0.08) * 0.02
-    }
-  })
-
-  return (
-    <group ref={groupRef}>
-      {[...Array(5)].map((_, i) => {
-        const size = 2.5 + i * 2
-        const opacity = 0.03 - i * 0.005
-        return (
-          <Float
-            key={i}
-            speed={0.25 + i * 0.04}
-            rotationIntensity={0.1}
-            floatIntensity={0.25 + i * 0.04}
-            position={[0, -0.5 + i * 0.25, -1.5 - i * 0.4]}
-          >
-            <Sphere args={[size, 32, 32]}>
-              <MeshDistortMaterial
-                color={i % 2 === 0 ? "#1C448E" : "#938BA1"}
-                distort={0.6 + i * 0.08}
-                speed={0.4 + i * 0.04}
-                roughness={0.3}
-                metalness={0.2}
-                transparent
-                opacity={opacity}
-                emissive={i % 2 === 0 ? "#1C448E" : "#938BA1"}
-                emissiveIntensity={0.08}
-              />
-            </Sphere>
-          </Float>
-        )
-      })}
-    </group>
-  )
-}
-
-// Password strength checker
+// ========== PASSWORD STRENGTH ==========
 const getPasswordStrength = (password: string) => {
   const requirements = {
     minLength: password.length >= 8,
@@ -242,13 +35,13 @@ const getPasswordStrength = (password: string) => {
   return { score, label, color, requirements }
 }
 
-// Validation schema
+// ========== VALIDATION SCHEMA ==========
 const registerSchema = yup.object({
   email: yup.string().email('Invalid email').required('Email required'),
   password: yup.string().min(8, 'Min 8 characters').required('Password required'),
   confirmPassword: yup.string().oneOf([yup.ref('password')], 'Passwords must match').required('Confirm password'),
   fullName: yup.string().min(2, 'Min 2 characters').required('Full name required'),
-  phone: yup.string().required('Phone required'),
+  phone: yup.string().min(10, 'Enter valid phone number').required('Phone required'),
   identityType: yup.string().required('Select ID type'),
   identityNumber: yup.string().min(6, 'Min 6 characters').required('ID number required'),
   termsAccepted: yup.boolean().oneOf([true], 'Accept terms').required(),
@@ -258,12 +51,303 @@ const registerSchema = yup.object({
 
 type RegisterSchemaType = yup.InferType<typeof registerSchema>
 
+// ========== OTP VERIFICATION COMPONENT ==========
+interface OTPVerificationProps {
+  email: string
+  onVerify: (code: string) => void
+  onResend: () => void
+  isLoading: boolean
+  onClose?: () => void
+}
+
+const OTPVerification: React.FC<OTPVerificationProps> = ({
+  email,
+  onVerify,
+  onResend,
+  isLoading,
+  onClose
+}) => {
+  const [otp, setOtp] = useState(['', '', '', '', '', ''])
+  const [focusedIndex, setFocusedIndex] = useState(0)
+  const [timer, setTimer] = useState(60)
+  const [canResend, setCanResend] = useState(false)
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([])
+
+  useEffect(() => {
+    if (timer > 0) {
+      const interval = setInterval(() => setTimer(prev => prev - 1), 1000)
+      return () => clearInterval(interval)
+    } else {
+      setCanResend(true)
+    }
+  }, [timer])
+
+  const handleChange = (index: number, value: string) => {
+    if (value.length > 1) return
+    const newOtp = [...otp]
+    newOtp[index] = value
+    setOtp(newOtp)
+
+    if (value && index < 5) {
+      inputRefs.current[index + 1]?.focus()
+      setFocusedIndex(index + 1)
+    }
+  }
+
+  const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus()
+      setFocusedIndex(index - 1)
+    }
+    if (e.key === 'Enter') {
+      handleVerify()
+    }
+  }
+
+  const handleVerify = () => {
+    const code = otp.join('')
+    if (code.length === 6) {
+      onVerify(code)
+    } else {
+      toast.error('Please enter all 6 digits')
+    }
+  }
+
+  const handleResend = () => {
+    setTimer(60)
+    setCanResend(false)
+    onResend()
+  }
+
+  const setInputRef = (index: number) => (el: HTMLInputElement | null) => {
+    inputRefs.current[index] = el
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+      onClick={(e) => e.target === e.currentTarget && onClose?.()}
+    >
+      <div className="bg-gradient-to-br from-[#1C448E] to-[#0F2A5E] rounded-3xl p-8 max-w-md w-full border border-[#F4FDFF]/20 shadow-2xl">
+        <div className="text-center mb-6">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', bounce: 0.5 }}
+            className="w-16 h-16 bg-[#F4FDFF]/10 rounded-2xl flex items-center justify-center mx-auto mb-4"
+          >
+            <Mail className="w-8 h-8 text-[#F4FDFF]" />
+          </motion.div>
+          <h2 className="text-2xl font-bold text-[#F4FDFF]">Verify Your Email</h2>
+          <p className="text-[#F4FDFF]/60 text-sm mt-2">
+            We sent a verification code to <span className="text-[#F4FDFF]/80 font-medium">{email}</span>
+          </p>
+        </div>
+
+        <div className="flex justify-center gap-2 mb-6">
+          {otp.map((digit, index) => (
+            <input
+              key={index}
+              ref={setInputRef(index)}
+              type="text"
+              maxLength={1}
+              value={digit}
+              onChange={(e) => handleChange(index, e.target.value)}
+              onKeyDown={(e) => handleKeyDown(index, e)}
+              onFocus={() => setFocusedIndex(index)}
+              className={`w-12 h-14 text-center text-2xl font-bold bg-[#F4FDFF]/5 border-2 rounded-xl text-[#F4FDFF] outline-none transition-all ${
+                focusedIndex === index
+                  ? 'border-[#F4FDFF] ring-2 ring-[#F4FDFF]/20'
+                  : 'border-[#F4FDFF]/20'
+              }`}
+              autoFocus={index === 0}
+            />
+          ))}
+        </div>
+
+        <div className="flex items-center justify-between text-sm mb-6">
+          <span className="text-[#F4FDFF]/40">
+            {timer > 0 ? `Resend in ${timer}s` : 'Code expired'}
+          </span>
+          <button
+            onClick={handleResend}
+            disabled={!canResend}
+            className={`text-[#938BA1] hover:text-[#F4FDFF] transition-colors ${
+              !canResend ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+          >
+            Resend Code
+          </button>
+        </div>
+
+        <div className="flex gap-3">
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="flex-1 px-4 py-3 border border-[#F4FDFF]/20 text-[#F4FDFF] rounded-xl hover:bg-[#F4FDFF]/10 transition-colors"
+            >
+              Cancel
+            </button>
+          )}
+          <button
+            onClick={handleVerify}
+            disabled={isLoading}
+            className="flex-1 px-4 py-3 bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] text-[#1C448E] font-semibold rounded-xl hover:shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            {isLoading ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /> Verifying...</>
+            ) : (
+              <><Check size={18} /> Verify</>
+            )}
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+// ========== DOCUMENT UPLOAD COMPONENT ==========
+interface DocumentUploadProps {
+  onFileSelect: (file: File | null) => void
+  selectedFile: File | null
+  previewUrl: string | null
+  error?: string
+}
+
+const DocumentUpload: React.FC<DocumentUploadProps> = ({
+  onFileSelect,
+  selectedFile,
+  previewUrl,
+  error
+}) => {
+  const [dragOver, setDragOver] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File size must be less than 5MB')
+        return
+      }
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf']
+      if (!allowedTypes.includes(file.type)) {
+        toast.error('Please upload a valid image or PDF')
+        return
+      }
+      onFileSelect(file)
+    }
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    setDragOver(false)
+    const file = e.dataTransfer.files?.[0]
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File size must be less than 5MB')
+        return
+      }
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf']
+      if (!allowedTypes.includes(file.type)) {
+        toast.error('Please upload a valid image or PDF')
+        return
+      }
+      onFileSelect(file)
+    }
+  }
+
+  const handleRemove = () => {
+    onFileSelect(null)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
+  return (
+    <div className="space-y-2">
+      <div
+        className={`relative border-2 border-dashed rounded-xl p-4 text-center transition-all ${
+          dragOver
+            ? 'border-[#F4FDFF] bg-[#F4FDFF]/10'
+            : selectedFile
+            ? 'border-[#938BA1] bg-[#938BA1]/5'
+            : 'border-[#F4FDFF]/20 hover:border-[#F4FDFF]/40'
+        } ${error ? 'border-[#938BA1]' : ''}`}
+        onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={handleDrop}
+      >
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*,.pdf"
+          onChange={handleFileChange}
+          className="absolute inset-0 opacity-0 cursor-pointer"
+        />
+        
+        {selectedFile && previewUrl ? (
+          <div className="relative">
+            <div className="flex items-center gap-3 justify-center">
+              {selectedFile.type.startsWith('image/') ? (
+                <img
+                  src={previewUrl}
+                  alt="Upload preview"
+                  className="w-20 h-20 rounded-lg object-cover"
+                />
+              ) : (
+                <div className="w-20 h-20 rounded-lg bg-[#F4FDFF]/10 flex items-center justify-center">
+                  <FileCheck className="w-8 h-8 text-[#938BA1]" />
+                </div>
+              )}
+              <div className="text-left">
+                <p className="text-sm text-[#F4FDFF]/80 truncate max-w-[150px]">
+                  {selectedFile.name}
+                </p>
+                <p className="text-xs text-[#F4FDFF]/40">
+                  {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleRemove}
+              className="absolute -top-2 -right-2 p-1 bg-[#1C448E] rounded-full hover:bg-[#0F2A5E] transition-colors"
+            >
+              <X className="w-4 h-4 text-[#F4FDFF]" />
+            </button>
+          </div>
+        ) : (
+          <div>
+            <Upload className="w-8 h-8 text-[#938BA1] mx-auto mb-2" />
+            <p className="text-sm text-[#F4FDFF]/60">
+              Drag & drop or <span className="text-[#938BA1] hover:text-[#F4FDFF] transition-colors">browse</span>
+            </p>
+            <p className="text-xs text-[#F4FDFF]/30 mt-1">
+              JPG, PNG, PDF (max 5MB)
+            </p>
+          </div>
+        )}
+      </div>
+      {error && <p className="text-[#938BA1] text-xs">{error}</p>}
+    </div>
+  )
+}
+
+// ========== MAIN REGISTER COMPONENT ==========
 const Register: React.FC = () => {
   const navigate = useNavigate()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [passwordStrength, setPasswordStrength] = useState(getPasswordStrength(''))
   const [isHovered, setIsHovered] = useState(false)
+  const [showOTP, setShowOTP] = useState(false)
+  const [registeredEmail, setRegisteredEmail] = useState('')
+  const [documentFile, setDocumentFile] = useState<File | null>(null)
+  const [documentPreview, setDocumentPreview] = useState<string | null>(null)
 
   const {
     register, handleSubmit, watch, formState: { errors, isSubmitting }
@@ -282,11 +366,34 @@ const Register: React.FC = () => {
   const watchTermsAccepted = watch('termsAccepted')
   const watchPrivacyAccepted = watch('privacyPolicyAccepted')
   const watchIdentityType = watch('identityType', 'national_id')
+  const watchEmail = watch('email', '')
 
   useEffect(() => {
     setPasswordStrength(getPasswordStrength(watchPassword))
   }, [watchPassword])
 
+  const handleDocumentSelect = (file: File | null) => {
+    setDocumentFile(file)
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setDocumentPreview(e.target?.result as string)
+      }
+      reader.readAsDataURL(file)
+    } else {
+      setDocumentPreview(null)
+    }
+  }
+
+  // ========== SEND OTP MUTATION ==========
+  const sendOTPMutation = useMutation({
+    mutationFn: async (email: string) => {
+      const response = await authApi.sendOTP({ email, type: 'verification' })
+      return response
+    }
+  })
+
+  // ========== REGISTER MUTATION ==========
   const registerMutation = useMutation({
     mutationFn: async (data: RegisterSchemaType) => {
       const registerData: RegisterData = {
@@ -295,25 +402,75 @@ const Register: React.FC = () => {
         confirmPassword: data.confirmPassword,
         fullName: data.fullName,
         phone: data.phone,
-        identityType: data.identityType as 'national_id' | 'passport' | 'driving_license' | 'other',
+        identityType: data.identityType as 'driving_license' | 'passport' | 'national_id' | 'other',
         identityNumber: data.identityNumber,
-        termsAccepted: data.termsAccepted || false,
-        privacyPolicyAccepted: data.privacyPolicyAccepted || false,
-        marketingConsent: data.marketingConsent || false
+        termsAccepted: data.termsAccepted,
+        privacyPolicyAccepted: data.privacyPolicyAccepted,
+        marketingConsent: data.marketingConsent
       }
       return authApi.register(registerData)
     },
-    onSuccess: () => {
-      toast.success('Account created successfully!')
-      navigate('/login')
+    onSuccess: async (response) => {
+      setRegisteredEmail(response.user.email)
+      // Send OTP after successful registration
+      await sendOTPMutation.mutateAsync(response.user.email)
+      setShowOTP(true)
+      toast.success('Account created! Please verify your email.')
     },
     onError: (error: any) => {
       toast.error(error.error?.message || 'Registration failed')
     }
   })
 
+  // ========== OTP VERIFICATION MUTATION ==========
+  const verifyOTPMutation = useMutation({
+    mutationFn: async (data: { email: string; code: string }) => {
+      const response = await authApi.verifyOTP(data)
+      return response
+    },
+    onSuccess: () => {
+      setShowOTP(false)
+      toast.success('Email verified successfully! 🎉')
+      navigate('/login')
+    },
+    onError: (error: any) => {
+      toast.error(error.error?.message || 'Invalid verification code')
+    }
+  })
+
+  // ========== RESEND OTP MUTATION ==========
+  const resendOTPMutation = useMutation({
+    mutationFn: async (email: string) => {
+      const response = await authApi.resendOTP({ email, type: 'verification' })
+      return response
+    },
+    onSuccess: () => {
+      toast.success('New code sent to your email!')
+    },
+    onError: (error: any) => {
+      toast.error(error.error?.message || 'Failed to resend code')
+    }
+  })
+
+  // ========== SUBMIT HANDLER ==========
   const onSubmit: SubmitHandler<RegisterSchemaType> = async (data) => {
+    if (!documentFile) {
+      toast.error('Please upload an identity document')
+      return
+    }
     await registerMutation.mutateAsync(data)
+  }
+
+  // ========== OTP HANDLERS ==========
+  const handleVerifyOTP = async (code: string) => {
+    await verifyOTPMutation.mutateAsync({
+      email: registeredEmail,
+      code
+    })
+  }
+
+  const handleResendOTP = async () => {
+    await resendOTPMutation.mutateAsync(registeredEmail)
   }
 
   const identityTypeOptions = [
@@ -332,32 +489,20 @@ const Register: React.FC = () => {
     { icon: Bell, title: 'Real-time Notifications', desc: 'Instant updates on your items', color: '#938BA1' }
   ]
 
-  if (registerMutation.isPending) {
+  // Show loading state
+  if (registerMutation.isPending || isSubmitting || sendOTPMutation.isPending) {
     return (
       <div className="fixed inset-0 bg-gradient-to-br from-[#1C448E] via-[#0F2A5E] to-[#1C448E] flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-[#F4FDFF]/30 border-t-[#F4FDFF] rounded-full animate-spin" />
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-[#F4FDFF]/30 border-t-[#F4FDFF] rounded-full animate-spin mx-auto" />
+          <p className="text-[#F4FDFF]/60 mt-4">Creating your account...</p>
+        </div>
       </div>
     )
   }
 
   return (
     <div className="fixed inset-0 overflow-y-auto overflow-x-hidden bg-gradient-to-br from-[#1C448E] via-[#0F2A5E] to-[#1C448E]">
-      
-      {/* Full Screen 3D Background - NEW GALAXY */}
-      <div className="fixed inset-0 w-full h-full">
-        <Canvas camera={{ position: [0, 0, 7], fov: 55 }}>
-          <ambientLight intensity={0.3} />
-          <directionalLight position={[3, 5, 3]} intensity={0.8} color="#F4FDFF" />
-          <pointLight position={[-3, 2, -3]} intensity={0.5} color="#938BA1" />
-          <pointLight position={[2, -3, 4]} intensity={0.4} color="#1C448E" />
-          <pointLight position={[0, 5, 0]} intensity={0.5} color="#F4FDFF" />
-          <RegisterParticleGalaxy />
-          <FluidAuraBackground />
-        </Canvas>
-      </div>
-      
-      {/* Gradient overlay for better readability */}
-      <div className="fixed inset-0 bg-gradient-to-b from-[#1C448E]/30 via-transparent to-[#1C448E]/50" />
       
       {/* Content */}
       <div className="relative z-10 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
@@ -479,17 +624,10 @@ const Register: React.FC = () => {
               />
               
               <div className="relative bg-[#F4FDFF]/5 backdrop-blur-2xl rounded-3xl shadow-2xl p-6 sm:p-8 border border-[#F4FDFF]/10">
-                <motion.div 
-                  className="absolute inset-0 rounded-3xl opacity-0 pointer-events-none"
-                  style={{ background: 'linear-gradient(135deg, transparent, rgba(244,253,255,0.08), rgba(147,139,161,0.08), transparent)' }}
-                  animate={{ opacity: isHovered ? 0.3 : 0 }}
-                  transition={{ duration: 0.3 }}
-                />
-                
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                   {/* Full Name */}
                   <div>
-                    <label className="block text-sm font-medium text-[#F4FDFF]/70 mb-2">Full Name</label>
+                    <label className="block text-sm font-medium text-[#F4FDFF]/70 mb-2">Full Name *</label>
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 -translate-y-1/2 text-[#F4FDFF]/30" size={18} />
                       <input
@@ -504,7 +642,7 @@ const Register: React.FC = () => {
 
                   {/* Email */}
                   <div>
-                    <label className="block text-sm font-medium text-[#F4FDFF]/70 mb-2">Email Address</label>
+                    <label className="block text-sm font-medium text-[#F4FDFF]/70 mb-2">Email Address *</label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-[#F4FDFF]/30" size={18} />
                       <input
@@ -519,7 +657,7 @@ const Register: React.FC = () => {
 
                   {/* Phone */}
                   <div>
-                    <label className="block text-sm font-medium text-[#F4FDFF]/70 mb-2">Phone Number</label>
+                    <label className="block text-sm font-medium text-[#F4FDFF]/70 mb-2">Phone Number *</label>
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-[#F4FDFF]/30" size={18} />
                       <input
@@ -534,7 +672,7 @@ const Register: React.FC = () => {
 
                   {/* Identity Type */}
                   <div>
-                    <label className="block text-sm font-medium text-[#F4FDFF]/70 mb-2">Identity Type</label>
+                    <label className="block text-sm font-medium text-[#F4FDFF]/70 mb-2">Identity Type *</label>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       {identityTypeOptions.map((option) => (
                         <label
@@ -551,11 +689,12 @@ const Register: React.FC = () => {
                         </label>
                       ))}
                     </div>
+                    {errors.identityType && <p className="text-[#938BA1] text-xs mt-1">{errors.identityType.message}</p>}
                   </div>
 
                   {/* Identity Number */}
                   <div>
-                    <label className="block text-sm font-medium text-[#F4FDFF]/70 mb-2">Identity Number</label>
+                    <label className="block text-sm font-medium text-[#F4FDFF]/70 mb-2">Identity Number *</label>
                     <div className="relative">
                       <IdCard className="absolute left-3 top-1/2 -translate-y-1/2 text-[#F4FDFF]/30" size={18} />
                       <input
@@ -568,9 +707,23 @@ const Register: React.FC = () => {
                     {errors.identityNumber && <p className="text-[#938BA1] text-xs mt-1">{errors.identityNumber.message}</p>}
                   </div>
 
+                  {/* Document Upload */}
+                  <div>
+                    <label className="block text-sm font-medium text-[#F4FDFF]/70 mb-2">Identity Document *</label>
+                    <DocumentUpload
+                      onFileSelect={handleDocumentSelect}
+                      selectedFile={documentFile}
+                      previewUrl={documentPreview}
+                      error={errors.identityNumber?.message}
+                    />
+                    <p className="text-xs text-[#F4FDFF]/30 mt-1">
+                      Upload a clear photo of your ID (JPG, PNG, PDF, max 5MB)
+                    </p>
+                  </div>
+
                   {/* Password */}
                   <div>
-                    <label className="block text-sm font-medium text-[#F4FDFF]/70 mb-2">Password</label>
+                    <label className="block text-sm font-medium text-[#F4FDFF]/70 mb-2">Password *</label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-[#F4FDFF]/30" size={18} />
                       <input
@@ -601,7 +754,7 @@ const Register: React.FC = () => {
 
                   {/* Confirm Password */}
                   <div>
-                    <label className="block text-sm font-medium text-[#F4FDFF]/70 mb-2">Confirm Password</label>
+                    <label className="block text-sm font-medium text-[#F4FDFF]/70 mb-2">Confirm Password *</label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-[#F4FDFF]/30" size={18} />
                       <input
@@ -655,7 +808,7 @@ const Register: React.FC = () => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     type="submit"
-                    disabled={registerMutation.isPending || isSubmitting || !watchTermsAccepted || !watchPrivacyAccepted}
+                    disabled={registerMutation.isPending || isSubmitting || !watchTermsAccepted || !watchPrivacyAccepted || !documentFile}
                     className="w-full bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] text-[#1C448E] font-semibold py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-[#938BA1]/20 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {registerMutation.isPending || isSubmitting ? (
@@ -674,6 +827,19 @@ const Register: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* OTP Verification Modal */}
+      <AnimatePresence>
+        {showOTP && (
+          <OTPVerification
+            email={registeredEmail}
+            onVerify={handleVerifyOTP}
+            onResend={handleResendOTP}
+            isLoading={verifyOTPMutation.isPending || resendOTPMutation.isPending}
+            onClose={() => setShowOTP(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }
