@@ -23,18 +23,30 @@ import type {
 } from '../types/auth.types'
 
 // ============================================
+// STORAGE KEYS - Must match client.ts
+// ============================================
+
+const STORAGE_KEYS = {
+  TOKEN: 'secure_finder_token',
+  REFRESH_TOKEN: 'secure_finder_refresh_token',
+  CURRENT_USER: 'secure_finder_current_user',
+  USERS: 'secure_finder_users',
+  SESSIONS: 'secure_finder_sessions'
+}
+
+// ============================================
 // UTILITY FUNCTIONS
 // ============================================
 
 const delay = (ms: number = 500) => new Promise(resolve => setTimeout(resolve, ms))
 const now = () => new Date()
 
-// Token generation
+// Token generation (for mock fallback)
 const generateToken = (userId: string, sessionId: string = Date.now().toString()): string => {
   return `mock-token-${userId}-${sessionId}-${Date.now()}`
 }
 
-// Session creation
+// Session creation (for mock fallback)
 const createSession = (userId: string, deviceInfo?: Partial<DeviceInfo>): Session => {
   return {
     id: Date.now().toString(),
@@ -53,18 +65,6 @@ const createSession = (userId: string, deviceInfo?: Partial<DeviceInfo>): Sessio
     expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     createdAt: now()
   }
-}
-
-// ============================================
-// STORAGE KEYS
-// ============================================
-
-const STORAGE_KEYS = {
-  USERS: 'secure_finder_users',
-  CURRENT_USER: 'secure_finder_current_user',
-  SESSIONS: 'secure_finder_sessions',
-  TOKEN: 'secure_finder_token',
-  REFRESH_TOKEN: 'secure_finder_refresh_token'
 }
 
 // ============================================
@@ -180,12 +180,14 @@ export const authApi = {
       })
       
       const result = response.data
+      console.log('📦 Registration response:', result)
       
-      // Store tokens from real backend
+      // Store tokens from real backend using consistent keys
       if (result.data?.accessToken) {
         localStorage.setItem(STORAGE_KEYS.TOKEN, result.data.accessToken)
         localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, result.data.refreshToken)
         localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(result.data.user))
+        console.log('✅ Tokens stored in localStorage')
       }
       
       console.log('✅ Registration successful for:', data.email)
@@ -203,11 +205,14 @@ export const authApi = {
       console.error('❌ Registration failed:', error)
       
       // Handle backend errors
-      if (error.response?.data?.message) {
+      if (error.response) {
+        console.error('❌ Error response data:', error.response.data)
+        console.error('❌ Error response status:', error.response.status)
+        
         throw {
           error: {
             code: error.response?.data?.code || 'REGISTRATION_FAILED',
-            message: error.response?.data?.message || 'Registration failed'
+            message: error.response?.data?.message || error.response?.data?.error || 'Registration failed'
           }
         }
       }
@@ -232,12 +237,14 @@ export const authApi = {
       })
       
       const result = response.data
+      console.log('📦 Login response:', result)
       
-      // Store tokens from real backend
+      // Store tokens from real backend using consistent keys
       if (result.data?.accessToken) {
         localStorage.setItem(STORAGE_KEYS.TOKEN, result.data.accessToken)
         localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, result.data.refreshToken)
         localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(result.data.user))
+        console.log('✅ Tokens stored in localStorage')
       }
       
       console.log('✅ Login successful for:', credentials.email)
@@ -255,20 +262,23 @@ export const authApi = {
       console.error('❌ Login failed:', error)
       
       // Handle backend errors
-      if (error.response?.status === 401) {
-        throw {
-          error: {
-            code: 'INVALID_CREDENTIALS',
-            message: 'Invalid email or password'
+      if (error.response) {
+        console.error('❌ Error response data:', error.response.data)
+        console.error('❌ Error response status:', error.response.status)
+        
+        if (error.response?.status === 401) {
+          throw {
+            error: {
+              code: 'INVALID_CREDENTIALS',
+              message: 'Invalid email or password'
+            }
           }
         }
-      }
-      
-      if (error.response?.data?.message) {
+        
         throw {
           error: {
             code: error.response?.data?.code || 'LOGIN_FAILED',
-            message: error.response?.data?.message || 'Login failed'
+            message: error.response?.data?.message || error.response?.data?.error || 'Login failed'
           }
         }
       }
@@ -284,13 +294,15 @@ export const authApi = {
     try {
       // REAL BACKEND CALL
       await api.post('/auth/logout')
+      console.log('✅ Logout successful on backend')
     } catch (error) {
       console.log('Logout error (ignored):', error)
     } finally {
-      // Always clear local storage
+      // Always clear local storage using consistent keys
       localStorage.removeItem(STORAGE_KEYS.TOKEN)
       localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN)
       localStorage.removeItem(STORAGE_KEYS.CURRENT_USER)
+      console.log('🧹 Local storage cleared')
     }
   },
 
@@ -310,6 +322,7 @@ export const authApi = {
       // REAL BACKEND CALL
       const response = await api.get('/auth/profile')
       const user = response.data.data
+      console.log('✅ Current user fetched:', user.email)
       
       localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user))
       
@@ -328,6 +341,7 @@ export const authApi = {
   },
 
   updateProfile: async (profileData: Partial<User>): Promise<User> => {
+    console.log('📝 Updating profile')
     await delay(800)
     
     const userId = getCurrentUserId()
@@ -337,6 +351,7 @@ export const authApi = {
       // REAL BACKEND CALL
       const response = await api.put('/auth/profile', profileData)
       const user = response.data.data
+      console.log('✅ Profile updated for:', user.email)
       
       localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user))
       
@@ -348,7 +363,7 @@ export const authApi = {
   },
 
   deleteAccount: async (password: string): Promise<void> => {
-    console.log('Account deletion requested')
+    console.log('🗑️ Account deletion requested')
     await delay(1000)
     
     const userId = getCurrentUserId()
@@ -357,8 +372,9 @@ export const authApi = {
     try {
       // REAL BACKEND CALL
       await api.delete('/auth/account', { data: { password } })
+      console.log('✅ Account deleted successfully')
       
-      // Clear local storage
+      // Clear local storage using consistent keys
       localStorage.removeItem(STORAGE_KEYS.TOKEN)
       localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN)
       localStorage.removeItem(STORAGE_KEYS.CURRENT_USER)
@@ -373,7 +389,7 @@ export const authApi = {
   // ==========================================
 
   changePassword: async (passwordData: PasswordChangeRequest): Promise<void> => {
-    console.log('Password change requested')
+    console.log('🔑 Password change requested')
     await delay(800)
     
     try {
@@ -382,6 +398,7 @@ export const authApi = {
         currentPassword: passwordData.currentPassword,
         newPassword: passwordData.newPassword
       })
+      console.log('✅ Password changed successfully')
     } catch (error: any) {
       console.error('❌ Failed to change password:', error)
       throw error
@@ -389,12 +406,13 @@ export const authApi = {
   },
 
   forgotPassword: async (email: string): Promise<void> => {
+    console.log('📧 Password reset requested for:', email)
     await delay(800)
     
     try {
       // REAL BACKEND CALL
       await api.post('/auth/forgot-password', { email })
-      console.log('Password reset email sent to:', email)
+      console.log('✅ Password reset email sent to:', email)
     } catch (error: any) {
       console.error('❌ Failed to send password reset email:', error)
       throw error
@@ -402,7 +420,7 @@ export const authApi = {
   },
 
   resetPassword: async (resetData: PasswordResetRequest): Promise<void> => {
-    console.log('Password reset requested')
+    console.log('🔑 Password reset requested')
     await delay(800)
     
     try {
@@ -411,6 +429,7 @@ export const authApi = {
         token: resetData.token,
         newPassword: resetData.newPassword
       })
+      console.log('✅ Password reset successfully')
     } catch (error: any) {
       console.error('❌ Failed to reset password:', error)
       throw error
@@ -422,11 +441,13 @@ export const authApi = {
   // ==========================================
 
   validateEmail: async (email: string): Promise<{ available: boolean }> => {
+    console.log('🔍 Validating email:', email)
     await delay(500)
     
     try {
       // REAL BACKEND CALL
       const response = await api.get(`/auth/validate-email?email=${encodeURIComponent(email)}`)
+      console.log('✅ Email validation result:', response.data)
       return response.data
     } catch (error: any) {
       console.error('❌ Failed to validate email:', error)
@@ -435,11 +456,13 @@ export const authApi = {
   },
 
   validatePhone: async (phone: string): Promise<{ available: boolean }> => {
+    console.log('🔍 Validating phone:', phone)
     await delay(500)
     
     try {
       // REAL BACKEND CALL
       const response = await api.get(`/auth/validate-phone?phone=${encodeURIComponent(phone)}`)
+      console.log('✅ Phone validation result:', response.data)
       return response.data
     } catch (error: any) {
       console.error('❌ Failed to validate phone:', error)
@@ -452,11 +475,13 @@ export const authApi = {
   // ==========================================
 
   setupTwoFactor: async (method: TwoFactorMethod): Promise<TwoFactorSetup> => {
+    console.log('🔐 Setting up 2FA with method:', method)
     await delay(800)
     
     try {
       // REAL BACKEND CALL
       const response = await api.post('/auth/2fa/setup', { method })
+      console.log('✅ 2FA setup successful')
       return response.data.data
     } catch (error: any) {
       console.error('❌ Failed to setup 2FA:', error)
@@ -465,11 +490,13 @@ export const authApi = {
   },
 
   verifyTwoFactorSetup: async (code: string): Promise<{ success: boolean; backupCodes?: string[] }> => {
+    console.log('🔐 Verifying 2FA setup')
     await delay(500)
     
     try {
       // REAL BACKEND CALL
       const response = await api.post('/auth/2fa/verify-setup', { code })
+      console.log('✅ 2FA setup verified')
       return response.data
     } catch (error: any) {
       console.error('❌ Failed to verify 2FA setup:', error)
@@ -478,11 +505,13 @@ export const authApi = {
   },
 
   disableTwoFactor: async (): Promise<void> => {
+    console.log('🔐 Disabling 2FA')
     await delay(500)
     
     try {
       // REAL BACKEND CALL
       await api.post('/auth/2fa/disable')
+      console.log('✅ 2FA disabled')
     } catch (error: any) {
       console.error('❌ Failed to disable 2FA:', error)
       throw error
@@ -490,6 +519,7 @@ export const authApi = {
   },
 
   verifyTwoFactor: async (code: string): Promise<AuthResponse> => {
+    console.log('🔐 Verifying 2FA code')
     await delay(500)
     
     const token = localStorage.getItem(STORAGE_KEYS.TOKEN)
@@ -499,6 +529,7 @@ export const authApi = {
       // REAL BACKEND CALL
       const response = await api.post('/auth/2fa/verify', { code })
       const result = response.data
+      console.log('✅ 2FA verification successful')
       
       if (result.data?.accessToken) {
         localStorage.setItem(STORAGE_KEYS.TOKEN, result.data.accessToken)
@@ -524,6 +555,7 @@ export const authApi = {
   // ==========================================
 
   startVerification: async (): Promise<VerificationRequest> => {
+    console.log('📋 Starting identity verification')
     await delay(500)
     const userId = getCurrentUserId()
     if (!userId) throw new Error('Not authenticated')
@@ -531,6 +563,7 @@ export const authApi = {
     try {
       // REAL BACKEND CALL
       const response = await api.post('/auth/verification/start')
+      console.log('✅ Identity verification started')
       return response.data.data
     } catch (error: any) {
       console.error('❌ Failed to start verification:', error)
@@ -542,6 +575,7 @@ export const authApi = {
     verificationId: string,
     documents: FormData
   ): Promise<VerificationRequest> => {
+    console.log('📎 Uploading verification documents for:', verificationId)
     await delay(1000)
     const userId = getCurrentUserId()
     if (!userId) throw new Error('Not authenticated')
@@ -553,6 +587,7 @@ export const authApi = {
           'Content-Type': 'multipart/form-data'
         }
       })
+      console.log('✅ Documents uploaded successfully')
       return response.data.data
     } catch (error: any) {
       console.error('❌ Failed to upload verification documents:', error)
@@ -561,6 +596,7 @@ export const authApi = {
   },
 
   getVerificationStatus: async (verificationId: string): Promise<VerificationRequest> => {
+    console.log('📋 Getting verification status for:', verificationId)
     await delay(300)
     const userId = getCurrentUserId()
     if (!userId) throw new Error('Not authenticated')
@@ -568,6 +604,7 @@ export const authApi = {
     try {
       // REAL BACKEND CALL
       const response = await api.get(`/auth/verification/${verificationId}`)
+      console.log('✅ Verification status retrieved')
       return response.data.data
     } catch (error: any) {
       console.error('❌ Failed to get verification status:', error)
@@ -580,6 +617,7 @@ export const authApi = {
   // ==========================================
 
   getActiveSessions: async (): Promise<ActiveSession[]> => {
+    console.log('📋 Getting active sessions')
     await delay(500)
     
     const userId = getCurrentUserId()
@@ -588,6 +626,7 @@ export const authApi = {
     try {
       // REAL BACKEND CALL
       const response = await api.get('/auth/sessions')
+      console.log('✅ Active sessions retrieved')
       return response.data.data
     } catch (error: any) {
       console.error('❌ Failed to get active sessions:', error)
@@ -596,6 +635,7 @@ export const authApi = {
   },
 
   revokeSession: async (revokeData: RevokeSessionRequest): Promise<void> => {
+    console.log('📋 Revoking session:', revokeData)
     await delay(500)
     
     const userId = getCurrentUserId()
@@ -605,8 +645,10 @@ export const authApi = {
       // REAL BACKEND CALL
       if (revokeData.revokeAll) {
         await api.post('/auth/sessions/revoke-all')
+        console.log('✅ All sessions revoked')
       } else {
         await api.delete(`/auth/sessions/${revokeData.sessionId}`)
+        console.log('✅ Session revoked:', revokeData.sessionId)
       }
     } catch (error: any) {
       console.error('❌ Failed to revoke session:', error)
@@ -619,6 +661,7 @@ export const authApi = {
   // ==========================================
 
   getSecurityEvents: async (limit: number = 50, page: number = 1): Promise<SecurityEvent[]> => {
+    console.log('📋 Getting security events')
     await delay(300)
     
     try {
@@ -626,9 +669,11 @@ export const authApi = {
       const response = await api.get('/auth/security-events', {
         params: { limit, page }
       })
+      console.log('✅ Security events retrieved')
       return response.data.data
     } catch (error: any) {
       console.error('❌ Failed to get security events:', error)
+      // Return mock data as fallback
       return [{
         id: '1',
         userId: '1',
@@ -642,6 +687,7 @@ export const authApi = {
   },
 
   getUserActivity: async (limit: number = 50, page: number = 1): Promise<UserActivity[]> => {
+    console.log('📋 Getting user activity')
     await delay(300)
     
     try {
@@ -649,9 +695,11 @@ export const authApi = {
       const response = await api.get('/auth/activity', {
         params: { limit, page }
       })
+      console.log('✅ User activity retrieved')
       return response.data.data
     } catch (error: any) {
       console.error('❌ Failed to get user activity:', error)
+      // Return mock data as fallback
       return [{
         id: '1',
         userId: '1',
@@ -668,6 +716,7 @@ export const authApi = {
   // ==========================================
 
   refreshToken: async (): Promise<{ token: string }> => {
+    console.log('🔄 Refreshing token')
     await delay(500)
     const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN)
     if (!refreshToken) {
@@ -685,6 +734,7 @@ export const authApi = {
         localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken)
       }
       
+      console.log('✅ Token refreshed successfully')
       return { token: newToken }
     } catch (error: any) {
       console.error('❌ Failed to refresh token:', error)
@@ -746,11 +796,13 @@ export const authApi = {
   // ==========================================
 
   checkHealth: async (): Promise<{ api: boolean; database: boolean; uptime: number; timestamp: Date }> => {
+    console.log('🏥 Checking health')
     await delay(100)
     
     try {
       // REAL BACKEND CALL
       const response = await api.get('/health')
+      console.log('✅ Health check successful')
       return {
         api: true,
         database: true,
@@ -769,11 +821,14 @@ export const authApi = {
   },
 
   ping: async (): Promise<number> => {
+    console.log('🏓 Pinging API')
     const start = Date.now()
     try {
       await api.get('/health')
       const end = Date.now()
-      return end - start
+      const latency = end - start
+      console.log('✅ Ping successful, latency:', latency, 'ms')
+      return latency
     } catch (error) {
       console.error('❌ Ping failed:', error)
       return 1000
