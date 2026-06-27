@@ -1,7 +1,8 @@
 // ============================================
-// AUTH API - COMPLETE VERSION
+// AUTH API - COMPLETE VERSION WITH REAL BACKEND
 // ============================================
 
+import api from './client'
 import type {
   LoginCredentials,
   RegisterData,
@@ -157,7 +158,7 @@ const getCurrentSessionId = (): string | null => {
 }
 
 // ============================================
-// AUTH API
+// AUTH API - REAL BACKEND INTEGRATION
 // ============================================
 
 export const authApi = {
@@ -169,91 +170,49 @@ export const authApi = {
     console.log('📝 Registering user:', data.email)
     await delay(800)
     
-    const users = getStoredUsers()
-    
-    if (users.some(u => u.email === data.email)) {
-      throw {
-        error: {
-          code: 'USER_EXISTS',
-          message: 'User with this email already exists'
+    try {
+      // REAL BACKEND CALL
+      const response = await api.post('/auth/register', {
+        fullName: data.fullName,
+        email: data.email,
+        phone: data.phone,
+        password: data.password
+      })
+      
+      const result = response.data
+      
+      // Store tokens from real backend
+      if (result.data?.accessToken) {
+        localStorage.setItem(STORAGE_KEYS.TOKEN, result.data.accessToken)
+        localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, result.data.refreshToken)
+        localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(result.data.user))
+      }
+      
+      console.log('✅ Registration successful for:', data.email)
+      
+      return {
+        success: result.success,
+        token: result.data?.accessToken,
+        refreshToken: result.data?.refreshToken,
+        user: result.data?.user,
+        session: result.data?.session,
+        requiresTwoFactor: result.data?.requiresTwoFactor || false,
+        twoFactorMethod: result.data?.twoFactorMethod
+      }
+    } catch (error: any) {
+      console.error('❌ Registration failed:', error)
+      
+      // Handle backend errors
+      if (error.response?.data?.message) {
+        throw {
+          error: {
+            code: error.response?.data?.code || 'REGISTRATION_FAILED',
+            message: error.response?.data?.message || 'Registration failed'
+          }
         }
       }
-    }
-    
-    const session = createSession(String(users.length + 1))
-    
-    const newUser: User = {
-      id: String(users.length + 1),
-      email: data.email,
-      fullName: data.fullName,
-      phone: data.phone,
-      identityType: data.identityType,
-      identityNumber: data.identityNumber,
-      identityVerified: false,
-      verificationLevel: 'basic',
-      verificationScore: 0,
-      role: 'user',
-      accountStatus: 'pending_verification',
-      twoFactorEnabled: false,
-      isEmailVerified: false,
-      isPhoneVerified: false,
-      preferences: {
-        language: 'en',
-        theme: 'dark',
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        dateFormat: 'MM/DD/YYYY',
-        currency: 'USD',
-        measurementSystem: 'metric',
-        emailNotifications: true,
-        pushNotifications: true,
-        smsNotifications: false
-      },
-      notificationSettings: {
-        itemMatches: true,
-        verificationUpdates: true,
-        claimUpdates: true,
-        messages: true,
-        systemAnnouncements: true,
-        marketing: data.marketingConsent || false,
-        securityAlerts: true,
-        quietHours: {
-          enabled: false,
-          startTime: '22:00',
-          endTime: '08:00'
-        }
-      },
-      privacySettings: {
-        profileVisibility: 'public',
-        showEmail: false,
-        showPhone: false,
-        showLocation: false,
-        allowMessaging: true,
-        dataSharing: {
-          analytics: true,
-          marketing: data.marketingConsent || false,
-          thirdParties: false
-        }
-      },
-      loginAttempts: 0,
-      sessions: [session],
-      createdAt: now(),
-      updatedAt: now()
-    }
-    
-    users.push(newUser)
-    saveUsers(users)
-    
-    localStorage.setItem(STORAGE_KEYS.TOKEN, session.token)
-    localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, session.refreshToken)
-    
-    console.log('✅ Registration successful for:', data.email)
-    
-    return {
-      success: true,
-      token: session.token,
-      refreshToken: session.refreshToken,
-      user: newUser,
-      session
+      
+      throw error
     }
   },
 
@@ -265,48 +224,56 @@ export const authApi = {
     console.log('🔐 Logging in:', credentials.email)
     await delay(800)
     
-    const users = getStoredUsers()
-    const user = users.find(u => u.email === credentials.email)
-    
-    if (!user) {
-      throw { error: { code: 'INVALID_CREDENTIALS', message: 'Invalid email or password' } }
-    }
-    
-    if (user.accountStatus === 'suspended') {
-      throw { error: { code: 'ACCOUNT_SUSPENDED', message: 'Your account has been suspended' } }
-    }
-    
-    if (user.accountStatus === 'banned') {
-      throw { error: { code: 'ACCOUNT_BANNED', message: 'Your account has been banned' } }
-    }
-    
-    if (!credentials.password || credentials.password.length < 1) {
-      throw { error: { code: 'INVALID_CREDENTIALS', message: 'Invalid email or password' } }
-    }
-    
-    const session = createSession(user.id, credentials.deviceInfo)
-    user.sessions.push(session)
-    user.lastLogin = now()
-    user.loginAttempts = 0
-    user.updatedAt = now()
-    
-    const userIndex = users.findIndex(u => u.id === user.id)
-    users[userIndex] = user
-    saveUsers(users)
-    
-    localStorage.setItem(STORAGE_KEYS.TOKEN, session.token)
-    localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, session.refreshToken)
-    
-    console.log('✅ Login successful for:', credentials.email)
-    
-    return {
-      success: true,
-      token: session.token,
-      refreshToken: session.refreshToken,
-      user,
-      session,
-      requiresTwoFactor: user.twoFactorEnabled,
-      twoFactorMethod: user.twoFactorMethod
+    try {
+      // REAL BACKEND CALL
+      const response = await api.post('/auth/login', {
+        email: credentials.email,
+        password: credentials.password
+      })
+      
+      const result = response.data
+      
+      // Store tokens from real backend
+      if (result.data?.accessToken) {
+        localStorage.setItem(STORAGE_KEYS.TOKEN, result.data.accessToken)
+        localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, result.data.refreshToken)
+        localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(result.data.user))
+      }
+      
+      console.log('✅ Login successful for:', credentials.email)
+      
+      return {
+        success: result.success,
+        token: result.data?.accessToken,
+        refreshToken: result.data?.refreshToken,
+        user: result.data?.user,
+        session: result.data?.session,
+        requiresTwoFactor: result.data?.requiresTwoFactor || false,
+        twoFactorMethod: result.data?.twoFactorMethod
+      }
+    } catch (error: any) {
+      console.error('❌ Login failed:', error)
+      
+      // Handle backend errors
+      if (error.response?.status === 401) {
+        throw {
+          error: {
+            code: 'INVALID_CREDENTIALS',
+            message: 'Invalid email or password'
+          }
+        }
+      }
+      
+      if (error.response?.data?.message) {
+        throw {
+          error: {
+            code: error.response?.data?.code || 'LOGIN_FAILED',
+            message: error.response?.data?.message || 'Login failed'
+          }
+        }
+      }
+      
+      throw error
     }
   },
 
@@ -314,26 +281,17 @@ export const authApi = {
     console.log('🚪 Logging out')
     await delay(500)
     
-    const token = localStorage.getItem(STORAGE_KEYS.TOKEN)
-    if (token) {
-      const parts = token.split('-')
-      const userId = parts.length > 2 ? parts[2] : null
-      const sessionId = parts.length > 3 ? parts[3] : null
-      
-      if (userId) {
-        const users = getStoredUsers()
-        const user = users.find(u => u.id === userId)
-        if (user && sessionId) {
-          user.sessions = user.sessions.filter(s => s.id !== sessionId)
-          const userIndex = users.findIndex(u => u.id === userId)
-          users[userIndex] = user
-          saveUsers(users)
-        }
-      }
+    try {
+      // REAL BACKEND CALL
+      await api.post('/auth/logout')
+    } catch (error) {
+      console.log('Logout error (ignored):', error)
+    } finally {
+      // Always clear local storage
+      localStorage.removeItem(STORAGE_KEYS.TOKEN)
+      localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN)
+      localStorage.removeItem(STORAGE_KEYS.CURRENT_USER)
     }
-    
-    localStorage.removeItem(STORAGE_KEYS.TOKEN)
-    localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN)
   },
 
   // ==========================================
@@ -348,19 +306,25 @@ export const authApi = {
       throw { error: { code: 'NO_TOKEN', message: 'No authentication token found' } }
     }
     
-    const userId = getCurrentUserId()
-    if (!userId) {
-      throw { error: { code: 'USER_NOT_FOUND', message: 'User not found' } }
+    try {
+      // REAL BACKEND CALL
+      const response = await api.get('/auth/profile')
+      const user = response.data.data
+      
+      localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user))
+      
+      return user
+    } catch (error: any) {
+      console.error('❌ Failed to get current user:', error)
+      
+      if (error.response?.status === 401) {
+        localStorage.removeItem(STORAGE_KEYS.TOKEN)
+        localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN)
+        throw { error: { code: 'UNAUTHORIZED', message: 'Please login again' } }
+      }
+      
+      throw error
     }
-    
-    const users = getStoredUsers()
-    const user = users.find(u => u.id === userId)
-    
-    if (!user) {
-      throw { error: { code: 'USER_NOT_FOUND', message: 'User not found' } }
-    }
-    
-    return user
   },
 
   updateProfile: async (profileData: Partial<User>): Promise<User> => {
@@ -369,29 +333,39 @@ export const authApi = {
     const userId = getCurrentUserId()
     if (!userId) throw new Error('Not authenticated')
     
-    const users = getStoredUsers()
-    const userIndex = users.findIndex(u => u.id === userId)
-    if (userIndex === -1) throw new Error('User not found')
-    
-    users[userIndex] = { ...users[userIndex], ...profileData, updatedAt: now() }
-    saveUsers(users)
-    
-    return users[userIndex]
+    try {
+      // REAL BACKEND CALL
+      const response = await api.put('/auth/profile', profileData)
+      const user = response.data.data
+      
+      localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user))
+      
+      return user
+    } catch (error: any) {
+      console.error('❌ Failed to update profile:', error)
+      throw error
+    }
   },
 
   deleteAccount: async (password: string): Promise<void> => {
-    console.log('Account deletion requested (mock)', { password })
+    console.log('Account deletion requested')
     await delay(1000)
     
     const userId = getCurrentUserId()
     if (!userId) throw new Error('Not authenticated')
     
-    const users = getStoredUsers()
-    const filteredUsers = users.filter(u => u.id !== userId)
-    saveUsers(filteredUsers)
-    
-    localStorage.removeItem(STORAGE_KEYS.TOKEN)
-    localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN)
+    try {
+      // REAL BACKEND CALL
+      await api.delete('/auth/account', { data: { password } })
+      
+      // Clear local storage
+      localStorage.removeItem(STORAGE_KEYS.TOKEN)
+      localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN)
+      localStorage.removeItem(STORAGE_KEYS.CURRENT_USER)
+    } catch (error: any) {
+      console.error('❌ Failed to delete account:', error)
+      throw error
+    }
   },
 
   // ==========================================
@@ -399,23 +373,48 @@ export const authApi = {
   // ==========================================
 
   changePassword: async (passwordData: PasswordChangeRequest): Promise<void> => {
-    console.log('Password change requested (mock)', passwordData)
+    console.log('Password change requested')
     await delay(800)
+    
+    try {
+      // REAL BACKEND CALL
+      await api.post('/auth/change-password', {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword
+      })
+    } catch (error: any) {
+      console.error('❌ Failed to change password:', error)
+      throw error
+    }
   },
 
   forgotPassword: async (email: string): Promise<void> => {
     await delay(800)
-    const users = getStoredUsers()
-    const user = users.find(u => u.email === email)
-    if (!user) {
-      throw { error: { code: 'USER_NOT_FOUND', message: 'No user found with this email' } }
+    
+    try {
+      // REAL BACKEND CALL
+      await api.post('/auth/forgot-password', { email })
+      console.log('Password reset email sent to:', email)
+    } catch (error: any) {
+      console.error('❌ Failed to send password reset email:', error)
+      throw error
     }
-    console.log('Password reset email sent to:', email)
   },
 
   resetPassword: async (resetData: PasswordResetRequest): Promise<void> => {
-    console.log('Password reset (mock)', resetData)
+    console.log('Password reset requested')
     await delay(800)
+    
+    try {
+      // REAL BACKEND CALL
+      await api.post('/auth/reset-password', {
+        token: resetData.token,
+        newPassword: resetData.newPassword
+      })
+    } catch (error: any) {
+      console.error('❌ Failed to reset password:', error)
+      throw error
+    }
   },
 
   // ==========================================
@@ -424,14 +423,28 @@ export const authApi = {
 
   validateEmail: async (email: string): Promise<{ available: boolean }> => {
     await delay(500)
-    const users = getStoredUsers()
-    return { available: !users.some(u => u.email === email) }
+    
+    try {
+      // REAL BACKEND CALL
+      const response = await api.get(`/auth/validate-email?email=${encodeURIComponent(email)}`)
+      return response.data
+    } catch (error: any) {
+      console.error('❌ Failed to validate email:', error)
+      return { available: false }
+    }
   },
 
   validatePhone: async (phone: string): Promise<{ available: boolean }> => {
     await delay(500)
-    const users = getStoredUsers()
-    return { available: !users.some(u => u.phone === phone) }
+    
+    try {
+      // REAL BACKEND CALL
+      const response = await api.get(`/auth/validate-phone?phone=${encodeURIComponent(phone)}`)
+      return response.data
+    } catch (error: any) {
+      console.error('❌ Failed to validate phone:', error)
+      return { available: false }
+    }
   },
 
   // ==========================================
@@ -440,22 +453,40 @@ export const authApi = {
 
   setupTwoFactor: async (method: TwoFactorMethod): Promise<TwoFactorSetup> => {
     await delay(800)
-    return {
-      method,
-      secret: 'MOCK_SECRET_KEY_12345',
-      qrCode: 'data:image/png;base64,mock-qr-code-data',
-      backupCodes: ['BACKUP-1234', 'BACKUP-5678', 'BACKUP-9012', 'BACKUP-3456', 'BACKUP-7890'],
-      phoneNumber: method === 'sms' ? '+1234567890' : undefined
+    
+    try {
+      // REAL BACKEND CALL
+      const response = await api.post('/auth/2fa/setup', { method })
+      return response.data.data
+    } catch (error: any) {
+      console.error('❌ Failed to setup 2FA:', error)
+      throw error
     }
   },
 
-  verifyTwoFactorSetup: async (): Promise<{ success: boolean; backupCodes?: string[] }> => {
+  verifyTwoFactorSetup: async (code: string): Promise<{ success: boolean; backupCodes?: string[] }> => {
     await delay(500)
-    return { success: true }
+    
+    try {
+      // REAL BACKEND CALL
+      const response = await api.post('/auth/2fa/verify-setup', { code })
+      return response.data
+    } catch (error: any) {
+      console.error('❌ Failed to verify 2FA setup:', error)
+      throw error
+    }
   },
 
   disableTwoFactor: async (): Promise<void> => {
     await delay(500)
+    
+    try {
+      // REAL BACKEND CALL
+      await api.post('/auth/2fa/disable')
+    } catch (error: any) {
+      console.error('❌ Failed to disable 2FA:', error)
+      throw error
+    }
   },
 
   verifyTwoFactor: async (code: string): Promise<AuthResponse> => {
@@ -464,33 +495,27 @@ export const authApi = {
     const token = localStorage.getItem(STORAGE_KEYS.TOKEN)
     if (!token) throw new Error('No session')
     
-    const userId = getCurrentUserId()
-    if (!userId) throw new Error('User not found')
-    
-    const users = getStoredUsers()
-    const user = users.find(u => u.id === userId)
-    if (!user) throw new Error('User not found')
-    
-    if (code.length !== 6) {
-      throw { error: { code: 'INVALID_2FA_CODE', message: 'Invalid verification code' } }
-    }
-    
-    const session = createSession(user.id)
-    user.sessions.push(session)
-    
-    const userIndex = users.findIndex(u => u.id === userId)
-    users[userIndex] = user
-    saveUsers(users)
-    
-    localStorage.setItem(STORAGE_KEYS.TOKEN, session.token)
-    localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, session.refreshToken)
-    
-    return {
-      success: true,
-      token: session.token,
-      refreshToken: session.refreshToken,
-      user,
-      session
+    try {
+      // REAL BACKEND CALL
+      const response = await api.post('/auth/2fa/verify', { code })
+      const result = response.data
+      
+      if (result.data?.accessToken) {
+        localStorage.setItem(STORAGE_KEYS.TOKEN, result.data.accessToken)
+        localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, result.data.refreshToken)
+        localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(result.data.user))
+      }
+      
+      return {
+        success: result.success,
+        token: result.data?.accessToken,
+        refreshToken: result.data?.refreshToken,
+        user: result.data?.user,
+        session: result.data?.session
+      }
+    } catch (error: any) {
+      console.error('❌ Failed to verify 2FA:', error)
+      throw error
     }
   },
 
@@ -503,15 +528,13 @@ export const authApi = {
     const userId = getCurrentUserId()
     if (!userId) throw new Error('Not authenticated')
     
-    return {
-      id: `verif_${Date.now()}`,
-      userId,
-      type: 'identity',
-      status: 'pending',
-      method: 'automated',
-      documents: [],
-      score: 0,
-      submittedAt: now()
+    try {
+      // REAL BACKEND CALL
+      const response = await api.post('/auth/verification/start')
+      return response.data.data
+    } catch (error: any) {
+      console.error('❌ Failed to start verification:', error)
+      throw error
     }
   },
 
@@ -523,33 +546,17 @@ export const authApi = {
     const userId = getCurrentUserId()
     if (!userId) throw new Error('Not authenticated')
     
-    const mockDocuments: VerificationDocument[] = [
-      {
-        id: 'doc1',
-        type: 'id_front',
-        url: 'https://via.placeholder.com/300x200',
-        fileName: 'id_front.jpg',
-        fileSize: 1024 * 1024,
-        mimeType: 'image/jpeg',
-        uploadedAt: now(),
-        verified: true,
-        verificationData: {
-          confidence: 95,
-          extractedData: { name: 'John Doe', dob: '1990-01-01' },
-          matches: true
+    try {
+      // REAL BACKEND CALL
+      const response = await api.post(`/auth/verification/${verificationId}/upload`, documents, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
         }
-      }
-    ]
-    
-    return {
-      id: verificationId,
-      userId,
-      type: 'identity',
-      status: 'processing',
-      method: 'automated',
-      documents: mockDocuments,
-      score: 75,
-      submittedAt: now()
+      })
+      return response.data.data
+    } catch (error: any) {
+      console.error('❌ Failed to upload verification documents:', error)
+      throw error
     }
   },
 
@@ -558,15 +565,13 @@ export const authApi = {
     const userId = getCurrentUserId()
     if (!userId) throw new Error('Not authenticated')
     
-    return {
-      id: verificationId,
-      userId,
-      type: 'identity',
-      status: 'processing',
-      method: 'automated',
-      documents: [],
-      score: 75,
-      submittedAt: now()
+    try {
+      // REAL BACKEND CALL
+      const response = await api.get(`/auth/verification/${verificationId}`)
+      return response.data.data
+    } catch (error: any) {
+      console.error('❌ Failed to get verification status:', error)
+      throw error
     }
   },
 
@@ -580,19 +585,14 @@ export const authApi = {
     const userId = getCurrentUserId()
     if (!userId) return []
     
-    const users = getStoredUsers()
-    const user = users.find(u => u.id === userId)
-    if (!user) return []
-    
-    const currentSessionId = getCurrentSessionId()
-    
-    return user.sessions.map(session => ({
-      id: session.id,
-      device: session.device,
-      ipAddress: session.ipAddress,
-      lastActive: session.lastActive,
-      current: session.id === currentSessionId
-    }))
+    try {
+      // REAL BACKEND CALL
+      const response = await api.get('/auth/sessions')
+      return response.data.data
+    } catch (error: any) {
+      console.error('❌ Failed to get active sessions:', error)
+      return []
+    }
   },
 
   revokeSession: async (revokeData: RevokeSessionRequest): Promise<void> => {
@@ -601,21 +601,17 @@ export const authApi = {
     const userId = getCurrentUserId()
     if (!userId) return
     
-    const users = getStoredUsers()
-    const user = users.find(u => u.id === userId)
-    if (!user) return
-    
-    const currentSessionId = getCurrentSessionId()
-    
-    if (revokeData.revokeAll) {
-      user.sessions = user.sessions.filter(s => s.id === currentSessionId)
-    } else {
-      user.sessions = user.sessions.filter(s => s.id !== revokeData.sessionId)
+    try {
+      // REAL BACKEND CALL
+      if (revokeData.revokeAll) {
+        await api.post('/auth/sessions/revoke-all')
+      } else {
+        await api.delete(`/auth/sessions/${revokeData.sessionId}`)
+      }
+    } catch (error: any) {
+      console.error('❌ Failed to revoke session:', error)
+      throw error
     }
-    
-    const userIndex = users.findIndex(u => u.id === userId)
-    users[userIndex] = user
-    saveUsers(users)
   },
 
   // ==========================================
@@ -624,27 +620,47 @@ export const authApi = {
 
   getSecurityEvents: async (limit: number = 50, page: number = 1): Promise<SecurityEvent[]> => {
     await delay(300)
-    return [{
-      id: '1',
-      userId: '1',
-      type: 'login',
-      action: 'Successful login',
-      ipAddress: '192.168.1.1',
-      userAgent: navigator.userAgent || 'Unknown',
-      timestamp: now()
-    }]
+    
+    try {
+      // REAL BACKEND CALL
+      const response = await api.get('/auth/security-events', {
+        params: { limit, page }
+      })
+      return response.data.data
+    } catch (error: any) {
+      console.error('❌ Failed to get security events:', error)
+      return [{
+        id: '1',
+        userId: '1',
+        type: 'login',
+        action: 'Successful login',
+        ipAddress: '192.168.1.1',
+        userAgent: navigator.userAgent || 'Unknown',
+        timestamp: now()
+      }]
+    }
   },
 
   getUserActivity: async (limit: number = 50, page: number = 1): Promise<UserActivity[]> => {
     await delay(300)
-    return [{
-      id: '1',
-      userId: '1',
-      action: 'Login',
-      resourceType: 'profile',
-      ipAddress: '192.168.1.1',
-      timestamp: now()
-    }]
+    
+    try {
+      // REAL BACKEND CALL
+      const response = await api.get('/auth/activity', {
+        params: { limit, page }
+      })
+      return response.data.data
+    } catch (error: any) {
+      console.error('❌ Failed to get user activity:', error)
+      return [{
+        id: '1',
+        userId: '1',
+        action: 'Login',
+        resourceType: 'profile',
+        ipAddress: '192.168.1.1',
+        timestamp: now()
+      }]
+    }
   },
 
   // ==========================================
@@ -658,15 +674,22 @@ export const authApi = {
       throw { error: { code: 'NO_REFRESH_TOKEN', message: 'No refresh token available' } }
     }
     
-    const userId = getCurrentUserId()
-    if (!userId) {
-      throw { error: { code: 'USER_NOT_FOUND', message: 'User not found' } }
+    try {
+      // REAL BACKEND CALL
+      const response = await api.post('/auth/refresh', { refreshToken })
+      const newToken = response.data.data.accessToken
+      const newRefreshToken = response.data.data.refreshToken
+      
+      localStorage.setItem(STORAGE_KEYS.TOKEN, newToken)
+      if (newRefreshToken) {
+        localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken)
+      }
+      
+      return { token: newToken }
+    } catch (error: any) {
+      console.error('❌ Failed to refresh token:', error)
+      throw error
     }
-    
-    const newToken = generateToken(userId)
-    localStorage.setItem(STORAGE_KEYS.TOKEN, newToken)
-    
-    return { token: newToken }
   },
 
   // ==========================================
@@ -677,18 +700,14 @@ export const authApi = {
     console.log('📧 Sending OTP to:', data.email, 'Type:', data.type)
     await delay(600)
     
-    const users = getStoredUsers()
-    const user = users.find(u => u.email === data.email)
-    
-    if (data.type === 'verification' && user && user.isEmailVerified) {
-      throw { error: { code: 'ALREADY_VERIFIED', message: 'Email already verified' } }
-    }
-    
-    console.log('✅ OTP sent to:', data.email)
-    
-    return { 
-      success: true, 
-      message: 'Verification code sent to your email' 
+    try {
+      // REAL BACKEND CALL
+      const response = await api.post('/auth/otp/send', data)
+      console.log('✅ OTP sent to:', data.email)
+      return response.data
+    } catch (error: any) {
+      console.error('❌ Failed to send OTP:', error)
+      throw error
     }
   },
 
@@ -696,51 +715,29 @@ export const authApi = {
     console.log('🔐 Verifying OTP for:', data.email, 'Code:', data.code)
     await delay(800)
     
-    if (data.code.length !== 6) {
-      throw { error: { code: 'INVALID_OTP', message: 'Invalid verification code' } }
+    try {
+      // REAL BACKEND CALL
+      const response = await api.post('/auth/otp/verify', data)
+      console.log('✅ OTP verified for:', data.email)
+      return response.data
+    } catch (error: any) {
+      console.error('❌ Failed to verify OTP:', error)
+      throw error
     }
-    
-    const users = getStoredUsers()
-    const user = users.find(u => u.email === data.email)
-    
-    if (!user) {
-      throw { error: { code: 'USER_NOT_FOUND', message: 'User not found' } }
-    }
-    
-    user.isEmailVerified = true
-    user.accountStatus = 'active'
-    user.identityVerified = true
-    user.verificationScore = 50
-    
-    const userIndex = users.findIndex(u => u.id === user.id)
-    users[userIndex] = user
-    saveUsers(users)
-    
-    console.log('✅ Email verified for:', data.email)
-    
-    return { success: true }
   },
 
   resendOTP: async (data: { email: string; type?: 'verification' | 'password_reset' | 'two_factor' }): Promise<{ success: boolean; message: string }> => {
     console.log('📧 Resending OTP to:', data.email)
     await delay(600)
     
-    const users = getStoredUsers()
-    const user = users.find(u => u.email === data.email)
-    
-    if (!user) {
-      throw { error: { code: 'USER_NOT_FOUND', message: 'User not found' } }
-    }
-    
-    if (data.type === 'verification' && user.isEmailVerified) {
-      throw { error: { code: 'ALREADY_VERIFIED', message: 'Email already verified' } }
-    }
-    
-    console.log('✅ OTP resent to:', data.email)
-    
-    return { 
-      success: true, 
-      message: 'New verification code sent to your email' 
+    try {
+      // REAL BACKEND CALL
+      const response = await api.post('/auth/otp/resend', data)
+      console.log('✅ OTP resent to:', data.email)
+      return response.data
+    } catch (error: any) {
+      console.error('❌ Failed to resend OTP:', error)
+      throw error
     }
   },
 
@@ -750,18 +747,37 @@ export const authApi = {
 
   checkHealth: async (): Promise<{ api: boolean; database: boolean; uptime: number; timestamp: Date }> => {
     await delay(100)
-    return {
-      api: true,
-      database: true,
-      uptime: Math.floor(Date.now() / 1000),
-      timestamp: now()
+    
+    try {
+      // REAL BACKEND CALL
+      const response = await api.get('/health')
+      return {
+        api: true,
+        database: true,
+        uptime: response.data.uptime || Math.floor(Date.now() / 1000),
+        timestamp: new Date(response.data.timestamp || now())
+      }
+    } catch (error: any) {
+      console.error('❌ Health check failed:', error)
+      return {
+        api: false,
+        database: false,
+        uptime: Math.floor(Date.now() / 1000),
+        timestamp: now()
+      }
     }
   },
 
   ping: async (): Promise<number> => {
     const start = Date.now()
-    await delay(50)
-    return Date.now() - start
+    try {
+      await api.get('/health')
+      const end = Date.now()
+      return end - start
+    } catch (error) {
+      console.error('❌ Ping failed:', error)
+      return 1000
+    }
   }
 }
 
