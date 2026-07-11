@@ -11,7 +11,7 @@ import {
   Mail, Lock, User, Phone, CheckCircle, Eye, EyeOff, 
   AlertCircle, Shield, Crown, Diamond, ArrowRight, Award, 
   Heart, Globe, Zap, Bell, Clock, Users, Loader2, 
-  RefreshCw, Sparkles, Check
+  Sparkles, Check
 } from 'lucide-react'
 
 import { authApi } from '../../api/auth.api'
@@ -35,7 +35,7 @@ const getPasswordStrength = (password: string) => {
   return { score, label, color, requirements }
 }
 
-// ========== VALIDATION SCHEMA (no identity, no captcha) ==========
+// ========== VALIDATION SCHEMA ==========
 const registerSchema = yup.object({
   email: yup.string().email('Invalid email').required('Email required'),
   password: yup.string().min(8, 'Min 8 characters').required('Password required'),
@@ -248,17 +248,15 @@ const Register: React.FC = () => {
     }
   })
 
-  // ========== REGISTER MUTATION (no identity, no captcha) ==========
+  // ========== REGISTER MUTATION ==========
   const registerMutation = useMutation({
     mutationFn: async (data: RegisterSchemaType) => {
       const registerData: RegisterData = {
+        fullName: data.fullName,
         email: data.email,
+        phone: data.phone,
         password: data.password,
         confirmPassword: data.confirmPassword,
-        fullName: data.fullName,
-        phone: data.phone,
-        identityType: 'national_id', // dummy to satisfy type
-        identityNumber: 'N/A',
         termsAccepted: data.termsAccepted,
         privacyPolicyAccepted: data.privacyPolicyAccepted,
         marketingConsent: data.marketingConsent
@@ -267,12 +265,12 @@ const Register: React.FC = () => {
     },
     onSuccess: async (response) => {
       setRegisteredEmail(response.user.email)
-      // Send OTP after successful registration
       await sendOTPMutation.mutateAsync(response.user.email)
       setShowOTP(true)
       toast.success('Account created! Please verify your email.')
     },
     onError: (error: any) => {
+      console.error('Registration error:', error)
       toast.error(error.error?.message || 'Registration failed')
     }
   })
@@ -347,7 +345,6 @@ const Register: React.FC = () => {
 
   return (
     <div className="fixed inset-0 overflow-y-auto overflow-x-hidden bg-gradient-to-br from-[#1C448E] via-[#0F2A5E] to-[#1C448E]">
-      
       <div className="relative z-10 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           
@@ -498,7 +495,7 @@ const Register: React.FC = () => {
                     {errors.email && <p className="text-[#938BA1] text-xs mt-1">{errors.email.message}</p>}
                   </div>
 
-                  {/* Phone - Nigerian format */}
+                  {/* Phone */}
                   <div>
                     <label className="block text-sm font-medium text-[#F4FDFF]/70 mb-2">Phone Number *</label>
                     <div className="relative">
@@ -596,7 +593,7 @@ const Register: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Submit Button - gradient */}
+                  {/* Submit Button */}
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}

@@ -147,14 +147,18 @@ export interface LoginCredentials {
   deviceInfo?: Partial<DeviceInfo>
 }
 
+// ============================================
+// REGISTER DATA - identity fields are OPTIONAL
+// ============================================
+
 export interface RegisterData {
   email: string
   password: string
   confirmPassword: string
   fullName: string
   phone: string
-  identityType: IdentityType
-  identityNumber: string
+  identityType?: 'driving_license' | 'passport' | 'national_id' | 'other'  // ✅ Optional
+  identityNumber?: string  // ✅ Optional
   termsAccepted: boolean
   privacyPolicyAccepted: boolean
   marketingConsent: boolean

@@ -1,6 +1,5 @@
 // ============================================
-// FRONTEND AUTH API - CORRECT VERSION
-// NO BACKEND IMPORTS!
+// AUTH API - COMPLETE VERSION
 // ============================================
 
 import api from './client'
@@ -9,17 +8,15 @@ import type {
   RegisterData,
   AuthResponse,
   User,
-  Session,
-  DeviceInfo,
-  TwoFactorMethod,
   VerificationRequest,
+  PasswordChangeRequest,
+  PasswordResetRequest,
+  TwoFactorMethod,
   TwoFactorSetup,
   ActiveSession,
   RevokeSessionRequest,
   SecurityEvent,
-  UserActivity,
-  PasswordChangeRequest,
-  PasswordResetRequest
+  UserActivity
 } from '../types/auth.types'
 
 const STORAGE_KEYS = {
@@ -38,22 +35,27 @@ export const authApi = {
 
   register: async (data: RegisterData): Promise<AuthResponse> => {
     console.log('📝 Registering user:', data.email)
-    await delay(800)
     
     try {
       const response = await api.post('/auth/register', {
         fullName: data.fullName,
         email: data.email,
         phone: data.phone,
-        password: data.password
+        password: data.password,
+        confirmPassword: data.confirmPassword,
+        termsAccepted: data.termsAccepted,
+        privacyPolicyAccepted: data.privacyPolicyAccepted,
+        marketingConsent: data.marketingConsent
       })
       
       const result = response.data
+      console.log('📦 Registration response:', result)
       
       if (result.data?.accessToken) {
         localStorage.setItem(STORAGE_KEYS.TOKEN, result.data.accessToken)
         localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, result.data.refreshToken)
         localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(result.data.user))
+        console.log('✅ Tokens stored')
       }
       
       return {
@@ -66,8 +68,13 @@ export const authApi = {
         twoFactorMethod: result.data?.twoFactorMethod
       }
     } catch (error: any) {
-      console.error('❌ Registration failed:', error)
-      throw error
+      console.error('❌ Registration failed:', error.response?.data || error.message)
+      throw {
+        error: {
+          code: error.response?.data?.code || 'REGISTRATION_FAILED',
+          message: error.response?.data?.message || error.response?.data?.error || 'Registration failed'
+        }
+      }
     }
   },
 
@@ -77,7 +84,6 @@ export const authApi = {
 
   login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
     console.log('🔐 Logging in:', credentials.email)
-    await delay(800)
     
     try {
       const response = await api.post('/auth/login', {
@@ -114,8 +120,6 @@ export const authApi = {
 
   logout: async (): Promise<void> => {
     console.log('🚪 Logging out')
-    await delay(500)
-    
     try {
       await api.post('/auth/logout')
     } catch (error) {
@@ -132,8 +136,6 @@ export const authApi = {
   // ==========================================
 
   getCurrentUser: async (): Promise<User> => {
-    await delay(500)
-    
     const token = localStorage.getItem(STORAGE_KEYS.TOKEN)
     if (!token) {
       throw { error: { code: 'NO_TOKEN', message: 'No authentication token found' } }
