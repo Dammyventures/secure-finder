@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect } from 'react'
 import type { SubmitHandler } from 'react-hook-form'
 import { useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
@@ -8,10 +8,10 @@ import { useMutation } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { 
-  Mail, Lock, User, Phone, IdCard, CheckCircle, Eye, EyeOff, 
+  Mail, Lock, User, Phone, CheckCircle, Eye, EyeOff, 
   AlertCircle, Shield, Crown, Diamond, ArrowRight, Award, 
-  Heart, Globe, Zap, Bell, Clock, Users, Upload, X, FileCheck,
-  Loader2, Check
+  Heart, Globe, Zap, Bell, Clock, Users, Loader2, 
+  RefreshCw, Sparkles, Check
 } from 'lucide-react'
 
 import { authApi } from '../../api/auth.api'
@@ -35,15 +35,15 @@ const getPasswordStrength = (password: string) => {
   return { score, label, color, requirements }
 }
 
-// ========== VALIDATION SCHEMA ==========
+// ========== VALIDATION SCHEMA (no identity, no captcha) ==========
 const registerSchema = yup.object({
   email: yup.string().email('Invalid email').required('Email required'),
   password: yup.string().min(8, 'Min 8 characters').required('Password required'),
   confirmPassword: yup.string().oneOf([yup.ref('password')], 'Passwords must match').required('Confirm password'),
   fullName: yup.string().min(2, 'Min 2 characters').required('Full name required'),
-  phone: yup.string().min(10, 'Enter valid phone number').required('Phone required'),
-  identityType: yup.string().required('Select ID type'),
-  identityNumber: yup.string().min(6, 'Min 6 characters').required('ID number required'),
+  phone: yup.string()
+    .matches(/^(080|081|090|091|070)\d{8}$/, 'Enter a valid Nigerian phone number (e.g., 08012345678)')
+    .required('Phone required'),
   termsAccepted: yup.boolean().oneOf([true], 'Accept terms').required(),
   privacyPolicyAccepted: yup.boolean().oneOf([true], 'Accept privacy policy').required(),
   marketingConsent: yup.boolean().default(false)
@@ -71,7 +71,7 @@ const OTPVerification: React.FC<OTPVerificationProps> = ({
   const [focusedIndex, setFocusedIndex] = useState(0)
   const [timer, setTimer] = useState(60)
   const [canResend, setCanResend] = useState(false)
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([])
+  const inputRefs = React.useRef<(HTMLInputElement | null)[]>([])
 
   useEffect(() => {
     if (timer > 0) {
@@ -209,134 +209,6 @@ const OTPVerification: React.FC<OTPVerificationProps> = ({
   )
 }
 
-// ========== DOCUMENT UPLOAD COMPONENT ==========
-interface DocumentUploadProps {
-  onFileSelect: (file: File | null) => void
-  selectedFile: File | null
-  previewUrl: string | null
-  error?: string
-}
-
-const DocumentUpload: React.FC<DocumentUploadProps> = ({
-  onFileSelect,
-  selectedFile,
-  previewUrl,
-  error
-}) => {
-  const [dragOver, setDragOver] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('File size must be less than 5MB')
-        return
-      }
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf']
-      if (!allowedTypes.includes(file.type)) {
-        toast.error('Please upload a valid image or PDF')
-        return
-      }
-      onFileSelect(file)
-    }
-  }
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    setDragOver(false)
-    const file = e.dataTransfer.files?.[0]
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('File size must be less than 5MB')
-        return
-      }
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf']
-      if (!allowedTypes.includes(file.type)) {
-        toast.error('Please upload a valid image or PDF')
-        return
-      }
-      onFileSelect(file)
-    }
-  }
-
-  const handleRemove = () => {
-    onFileSelect(null)
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
-  }
-
-  return (
-    <div className="space-y-2">
-      <div
-        className={`relative border-2 border-dashed rounded-xl p-4 text-center transition-all ${
-          dragOver
-            ? 'border-[#F4FDFF] bg-[#F4FDFF]/10'
-            : selectedFile
-            ? 'border-[#938BA1] bg-[#938BA1]/5'
-            : 'border-[#F4FDFF]/20 hover:border-[#F4FDFF]/40'
-        } ${error ? 'border-[#938BA1]' : ''}`}
-        onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={handleDrop}
-      >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*,.pdf"
-          onChange={handleFileChange}
-          className="absolute inset-0 opacity-0 cursor-pointer"
-        />
-        
-        {selectedFile && previewUrl ? (
-          <div className="relative">
-            <div className="flex items-center gap-3 justify-center">
-              {selectedFile.type.startsWith('image/') ? (
-                <img
-                  src={previewUrl}
-                  alt="Upload preview"
-                  className="w-20 h-20 rounded-lg object-cover"
-                />
-              ) : (
-                <div className="w-20 h-20 rounded-lg bg-[#F4FDFF]/10 flex items-center justify-center">
-                  <FileCheck className="w-8 h-8 text-[#938BA1]" />
-                </div>
-              )}
-              <div className="text-left">
-                <p className="text-sm text-[#F4FDFF]/80 truncate max-w-[150px]">
-                  {selectedFile.name}
-                </p>
-                <p className="text-xs text-[#F4FDFF]/40">
-                  {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={handleRemove}
-              className="absolute -top-2 -right-2 p-1 bg-[#1C448E] rounded-full hover:bg-[#0F2A5E] transition-colors"
-            >
-              <X className="w-4 h-4 text-[#F4FDFF]" />
-            </button>
-          </div>
-        ) : (
-          <div>
-            <Upload className="w-8 h-8 text-[#938BA1] mx-auto mb-2" />
-            <p className="text-sm text-[#F4FDFF]/60">
-              Drag & drop or <span className="text-[#938BA1] hover:text-[#F4FDFF] transition-colors">browse</span>
-            </p>
-            <p className="text-xs text-[#F4FDFF]/30 mt-1">
-              JPG, PNG, PDF (max 5MB)
-            </p>
-          </div>
-        )}
-      </div>
-      {error && <p className="text-[#938BA1] text-xs">{error}</p>}
-    </div>
-  )
-}
-
 // ========== MAIN REGISTER COMPONENT ==========
 const Register: React.FC = () => {
   const navigate = useNavigate()
@@ -346,8 +218,6 @@ const Register: React.FC = () => {
   const [isHovered, setIsHovered] = useState(false)
   const [showOTP, setShowOTP] = useState(false)
   const [registeredEmail, setRegisteredEmail] = useState('')
-  const [documentFile, setDocumentFile] = useState<File | null>(null)
-  const [documentPreview, setDocumentPreview] = useState<string | null>(null)
 
   const {
     register, handleSubmit, watch, formState: { errors, isSubmitting }
@@ -355,7 +225,6 @@ const Register: React.FC = () => {
     resolver: yupResolver(registerSchema) as any,
     mode: 'onChange',
     defaultValues: { 
-      identityType: 'national_id', 
       termsAccepted: false, 
       privacyPolicyAccepted: false, 
       marketingConsent: false 
@@ -365,25 +234,11 @@ const Register: React.FC = () => {
   const watchPassword = watch('password', '')
   const watchTermsAccepted = watch('termsAccepted')
   const watchPrivacyAccepted = watch('privacyPolicyAccepted')
-  const watchIdentityType = watch('identityType', 'national_id')
   const watchEmail = watch('email', '')
 
   useEffect(() => {
     setPasswordStrength(getPasswordStrength(watchPassword))
   }, [watchPassword])
-
-  const handleDocumentSelect = (file: File | null) => {
-    setDocumentFile(file)
-    if (file) {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        setDocumentPreview(e.target?.result as string)
-      }
-      reader.readAsDataURL(file)
-    } else {
-      setDocumentPreview(null)
-    }
-  }
 
   // ========== SEND OTP MUTATION ==========
   const sendOTPMutation = useMutation({
@@ -393,7 +248,7 @@ const Register: React.FC = () => {
     }
   })
 
-  // ========== REGISTER MUTATION ==========
+  // ========== REGISTER MUTATION (no identity, no captcha) ==========
   const registerMutation = useMutation({
     mutationFn: async (data: RegisterSchemaType) => {
       const registerData: RegisterData = {
@@ -402,8 +257,8 @@ const Register: React.FC = () => {
         confirmPassword: data.confirmPassword,
         fullName: data.fullName,
         phone: data.phone,
-        identityType: data.identityType as 'driving_license' | 'passport' | 'national_id' | 'other',
-        identityNumber: data.identityNumber,
+        identityType: 'national_id', // dummy to satisfy type
+        identityNumber: 'N/A',
         termsAccepted: data.termsAccepted,
         privacyPolicyAccepted: data.privacyPolicyAccepted,
         marketingConsent: data.marketingConsent
@@ -454,10 +309,6 @@ const Register: React.FC = () => {
 
   // ========== SUBMIT HANDLER ==========
   const onSubmit: SubmitHandler<RegisterSchemaType> = async (data) => {
-    if (!documentFile) {
-      toast.error('Please upload an identity document')
-      return
-    }
     await registerMutation.mutateAsync(data)
   }
 
@@ -472,13 +323,6 @@ const Register: React.FC = () => {
   const handleResendOTP = async () => {
     await resendOTPMutation.mutateAsync(registeredEmail)
   }
-
-  const identityTypeOptions = [
-    { value: 'national_id', label: 'National ID', icon: IdCard },
-    { value: 'passport', label: 'Passport', icon: Globe },
-    { value: 'driving_license', label: "Driver's License", icon: Award },
-    { value: 'other', label: 'Other ID', icon: Shield }
-  ]
 
   const benefits = [
     { icon: Shield, title: 'Secure Identity Verification', desc: 'Multi-level verification ensures safe returns', color: '#F4FDFF' },
@@ -504,7 +348,6 @@ const Register: React.FC = () => {
   return (
     <div className="fixed inset-0 overflow-y-auto overflow-x-hidden bg-gradient-to-br from-[#1C448E] via-[#0F2A5E] to-[#1C448E]">
       
-      {/* Content */}
       <div className="relative z-10 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-6xl mx-auto">
           
@@ -655,7 +498,7 @@ const Register: React.FC = () => {
                     {errors.email && <p className="text-[#938BA1] text-xs mt-1">{errors.email.message}</p>}
                   </div>
 
-                  {/* Phone */}
+                  {/* Phone - Nigerian format */}
                   <div>
                     <label className="block text-sm font-medium text-[#F4FDFF]/70 mb-2">Phone Number *</label>
                     <div className="relative">
@@ -663,62 +506,12 @@ const Register: React.FC = () => {
                       <input
                         type="tel"
                         {...register('phone')}
-                        placeholder="+1 (555) 123-4567"
+                        placeholder="080 1234 5678"
                         className="w-full pl-10 pr-4 py-3 bg-[#F4FDFF]/5 border border-[#F4FDFF]/15 rounded-xl text-[#F4FDFF] placeholder-[#F4FDFF]/20 focus:border-[#F4FDFF] focus:ring-2 focus:ring-[#F4FDFF]/20 transition-all outline-none"
                       />
                     </div>
                     {errors.phone && <p className="text-[#938BA1] text-xs mt-1">{errors.phone.message}</p>}
-                  </div>
-
-                  {/* Identity Type */}
-                  <div>
-                    <label className="block text-sm font-medium text-[#F4FDFF]/70 mb-2">Identity Type *</label>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {identityTypeOptions.map((option) => (
-                        <label
-                          key={option.value}
-                          className={`relative flex flex-col items-center p-2 border-2 rounded-xl cursor-pointer transition-all ${
-                            watchIdentityType === option.value
-                              ? 'border-[#F4FDFF] bg-[#F4FDFF]/20'
-                              : 'border-[#F4FDFF]/15 hover:border-[#F4FDFF]/30'
-                          }`}
-                        >
-                          <input type="radio" value={option.value} {...register('identityType')} className="sr-only" />
-                          <option.icon className="w-5 h-5 text-[#938BA1] mb-1" />
-                          <span className="text-xs font-medium text-[#F4FDFF]/70">{option.label}</span>
-                        </label>
-                      ))}
-                    </div>
-                    {errors.identityType && <p className="text-[#938BA1] text-xs mt-1">{errors.identityType.message}</p>}
-                  </div>
-
-                  {/* Identity Number */}
-                  <div>
-                    <label className="block text-sm font-medium text-[#F4FDFF]/70 mb-2">Identity Number *</label>
-                    <div className="relative">
-                      <IdCard className="absolute left-3 top-1/2 -translate-y-1/2 text-[#F4FDFF]/30" size={18} />
-                      <input
-                        type="text"
-                        {...register('identityNumber')}
-                        placeholder="Enter your ID number"
-                        className="w-full pl-10 pr-4 py-3 bg-[#F4FDFF]/5 border border-[#F4FDFF]/15 rounded-xl text-[#F4FDFF] placeholder-[#F4FDFF]/20 focus:border-[#F4FDFF] focus:ring-2 focus:ring-[#F4FDFF]/20 transition-all outline-none"
-                      />
-                    </div>
-                    {errors.identityNumber && <p className="text-[#938BA1] text-xs mt-1">{errors.identityNumber.message}</p>}
-                  </div>
-
-                  {/* Document Upload */}
-                  <div>
-                    <label className="block text-sm font-medium text-[#F4FDFF]/70 mb-2">Identity Document *</label>
-                    <DocumentUpload
-                      onFileSelect={handleDocumentSelect}
-                      selectedFile={documentFile}
-                      previewUrl={documentPreview}
-                      error={errors.identityNumber?.message}
-                    />
-                    <p className="text-xs text-[#F4FDFF]/30 mt-1">
-                      Upload a clear photo of your ID (JPG, PNG, PDF, max 5MB)
-                    </p>
+                    <p className="text-[10px] text-[#F4FDFF]/30 mt-1">Enter a valid Nigerian number (e.g., 08012345678)</p>
                   </div>
 
                   {/* Password */}
@@ -797,18 +590,18 @@ const Register: React.FC = () => {
                       <div>
                         <p className="text-xs text-[#F4FDFF]/70">Security Information</p>
                         <p className="text-xs text-[#F4FDFF]/40 mt-1">
-                          Your identity information is encrypted and stored securely for verification purposes only.
+                          Your information is encrypted and stored securely.
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  {/* Submit Button */}
+                  {/* Submit Button - gradient */}
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     type="submit"
-                    disabled={registerMutation.isPending || isSubmitting || !watchTermsAccepted || !watchPrivacyAccepted || !documentFile}
+                    disabled={registerMutation.isPending || isSubmitting || !watchTermsAccepted || !watchPrivacyAccepted}
                     className="w-full bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] text-[#1C448E] font-semibold py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-[#938BA1]/20 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {registerMutation.isPending || isSubmitting ? (
