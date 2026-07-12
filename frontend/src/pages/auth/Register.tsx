@@ -5,18 +5,19 @@ import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import { Link, useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { 
   Mail, Lock, User, Phone, CheckCircle, Eye, EyeOff, 
   AlertCircle, Shield, Crown, Diamond, ArrowRight, Award, 
-  Heart, Globe, Zap, Bell, Clock, Users, Loader2, Check,
-  XCircle, WifiOff
+  Heart, Globe, Zap, Bell, Clock, Users, Loader2,
+  WifiOff
 } from 'lucide-react'
 
 import { authApi } from '../../api/auth.api'
 import type { RegisterData } from '../../types/auth.types'
-// Remove this import: import { testBackendConnection } from '../../utils/testApi'
+// ✅ Import the API client to use its baseURL for health checks
+import api from '../../api/client'
 
 // ========== PASSWORD STRENGTH ==========
 const getPasswordStrength = (password: string) => {
@@ -52,173 +53,6 @@ const registerSchema = yup.object({
 
 type RegisterSchemaType = yup.InferType<typeof registerSchema>
 
-// ========== OTP VERIFICATION COMPONENT ==========
-interface OTPVerificationProps {
-  email: string
-  onVerify: (code: string) => void
-  onResend: () => void
-  isLoading: boolean
-  onClose?: () => void
-  error?: string | null
-}
-
-const OTPVerification: React.FC<OTPVerificationProps> = ({
-  email,
-  onVerify,
-  onResend,
-  isLoading,
-  onClose,
-  error
-}) => {
-  const [otp, setOtp] = useState(['', '', '', '', '', ''])
-  const [focusedIndex, setFocusedIndex] = useState(0)
-  const [timer, setTimer] = useState(60)
-  const [canResend, setCanResend] = useState(false)
-  const inputRefs = React.useRef<(HTMLInputElement | null)[]>([])
-
-  useEffect(() => {
-    if (timer > 0) {
-      const interval = setInterval(() => setTimer(prev => prev - 1), 1000)
-      return () => clearInterval(interval)
-    } else {
-      setCanResend(true)
-    }
-  }, [timer])
-
-  const handleChange = (index: number, value: string) => {
-    if (value.length > 1) return
-    const newOtp = [...otp]
-    newOtp[index] = value
-    setOtp(newOtp)
-
-    if (value && index < 5) {
-      inputRefs.current[index + 1]?.focus()
-      setFocusedIndex(index + 1)
-    }
-  }
-
-  const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === 'Backspace' && !otp[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus()
-      setFocusedIndex(index - 1)
-    }
-    if (e.key === 'Enter') {
-      handleVerify()
-    }
-  }
-
-  const handleVerify = () => {
-    const code = otp.join('')
-    if (code.length === 6) {
-      onVerify(code)
-    } else {
-      toast.error('Please enter all 6 digits')
-    }
-  }
-
-  const handleResend = () => {
-    setTimer(60)
-    setCanResend(false)
-    onResend()
-  }
-
-  const setInputRef = (index: number) => (el: HTMLInputElement | null) => {
-    inputRefs.current[index] = el
-  }
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.9 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
-      onClick={(e) => e.target === e.currentTarget && onClose?.()}
-    >
-      <div className="bg-gradient-to-br from-[#1C448E] to-[#0F2A5E] rounded-3xl p-8 max-w-md w-full border border-[#F4FDFF]/20 shadow-2xl">
-        <div className="text-center mb-6">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', bounce: 0.5 }}
-            className="w-16 h-16 bg-[#F4FDFF]/10 rounded-2xl flex items-center justify-center mx-auto mb-4"
-          >
-            <Mail className="w-8 h-8 text-[#F4FDFF]" />
-          </motion.div>
-          <h2 className="text-2xl font-bold text-[#F4FDFF]">Verify Your Email</h2>
-          <p className="text-[#F4FDFF]/60 text-sm mt-2">
-            We sent a verification code to <span className="text-[#F4FDFF]/80 font-medium">{email}</span>
-          </p>
-        </div>
-
-        <div className="flex justify-center gap-2 mb-6">
-          {otp.map((digit, index) => (
-            <input
-              key={index}
-              ref={setInputRef(index)}
-              type="text"
-              maxLength={1}
-              value={digit}
-              onChange={(e) => handleChange(index, e.target.value)}
-              onKeyDown={(e) => handleKeyDown(index, e)}
-              onFocus={() => setFocusedIndex(index)}
-              className={`w-12 h-14 text-center text-2xl font-bold bg-[#F4FDFF]/5 border-2 rounded-xl text-[#F4FDFF] outline-none transition-all ${
-                focusedIndex === index
-                  ? 'border-[#F4FDFF] ring-2 ring-[#F4FDFF]/20'
-                  : 'border-[#F4FDFF]/20'
-              }`}
-              autoFocus={index === 0}
-            />
-          ))}
-        </div>
-
-        {error && (
-          <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-2">
-            <XCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
-            <p className="text-sm text-red-400">{error}</p>
-          </div>
-        )}
-
-        <div className="flex items-center justify-between text-sm mb-6">
-          <span className="text-[#F4FDFF]/40">
-            {timer > 0 ? `Resend in ${timer}s` : 'Code expired'}
-          </span>
-          <button
-            onClick={handleResend}
-            disabled={!canResend}
-            className={`text-[#938BA1] hover:text-[#F4FDFF] transition-colors ${
-              !canResend ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-          >
-            Resend Code
-          </button>
-        </div>
-
-        <div className="flex gap-3">
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="flex-1 px-4 py-3 border border-[#F4FDFF]/20 text-[#F4FDFF] rounded-xl hover:bg-[#F4FDFF]/10 transition-colors"
-            >
-              Cancel
-            </button>
-          )}
-          <button
-            onClick={handleVerify}
-            disabled={isLoading}
-            className="flex-1 px-4 py-3 bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] text-[#1C448E] font-semibold rounded-xl hover:shadow-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-          >
-            {isLoading ? (
-              <><Loader2 className="w-4 h-4 animate-spin" /> Verifying...</>
-            ) : (
-              <><Check size={18} /> Verify</>
-            )}
-          </button>
-        </div>
-      </div>
-    </motion.div>
-  )
-}
-
 // ========== MAIN REGISTER COMPONENT ==========
 const Register: React.FC = () => {
   const navigate = useNavigate()
@@ -226,10 +60,6 @@ const Register: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [passwordStrength, setPasswordStrength] = useState(getPasswordStrength(''))
   const [isHovered, setIsHovered] = useState(false)
-  const [showOTP, setShowOTP] = useState(false)
-  const [registeredEmail, setRegisteredEmail] = useState('')
-  const [isRegistering, setIsRegistering] = useState(false)
-  const [otpError, setOtpError] = useState<string | null>(null)
   const [isBackendDown, setIsBackendDown] = useState(false)
 
   const {
@@ -252,39 +82,24 @@ const Register: React.FC = () => {
     setPasswordStrength(getPasswordStrength(watchPassword))
   }, [watchPassword])
 
-  // Test backend connection on mount - inline version without import
+  // ✅ Health check – uses the API client's baseURL (Render in production, localhost in dev)
   useEffect(() => {
     const checkBackend = async () => {
       try {
-        console.log('🔍 Testing backend connection...')
-        // Simple fetch to test if backend is accessible
-        const response = await fetch('http://localhost:5000/api/health')
-        if (response.ok) {
+        const response = await api.get('/health')
+        if (response.status === 200) {
           console.log('✅ Backend is running')
           setIsBackendDown(false)
         } else {
-          console.error('❌ Backend returned error:', response.status)
           setIsBackendDown(true)
-          toast.error('Cannot connect to server. Please make sure the backend is running.')
         }
       } catch (error) {
         console.error('❌ Backend connection failed:', error)
         setIsBackendDown(true)
-        toast.error('Cannot connect to server. Please make sure the backend is running on port 5000.')
       }
     }
     checkBackend()
   }, [])
-
-  // ========== SEND OTP MUTATION ==========
-  const sendOTPMutation = useMutation({
-    mutationFn: async (email: string) => {
-      console.log('📧 Sending OTP to:', email)
-      const response = await authApi.sendOTP({ email, type: 'verification' })
-      console.log('✅ OTP response:', response)
-      return response
-    }
-  })
 
   // ========== REGISTER MUTATION ==========
   const registerMutation = useMutation({
@@ -299,29 +114,14 @@ const Register: React.FC = () => {
       console.log('📝 Sending register data:', registerData)
       return authApi.register(registerData)
     },
-    onSuccess: async (response) => {
+    onSuccess: (response) => {
       console.log('✅ Registration success:', response)
-      setRegisteredEmail(response.user.email)
-      
-      try {
-        await sendOTPMutation.mutateAsync(response.user.email)
-        setShowOTP(true)
-        setOtpError(null)
-        toast.success('Account created! Please verify your email.')
-      } catch (otpError: any) {
-        console.error('❌ OTP sending failed:', otpError)
-        const errorMessage = otpError?.response?.data?.message || 
-                           otpError?.error?.message || 
-                           'Account created but OTP failed. Please request a new code.'
-        setOtpError(errorMessage)
-        toast.error(errorMessage)
-        setShowOTP(true)
-      }
+      toast.success('Account created successfully! 🎉')
+      navigate('/dashboard')
     },
     onError: (error: any) => {
-      console.error('❌ Registration error details:', error)
+      console.error('❌ Registration error:', error)
       
-      // Handle network errors specifically
       if (error?.error?.code === 'NETWORK_ERROR' || error?.code === 'ERR_NETWORK') {
         setIsBackendDown(true)
         toast.error('Network error: Cannot connect to server. Please check if backend is running.')
@@ -350,50 +150,6 @@ const Register: React.FC = () => {
     }
   })
 
-  // ========== OTP VERIFICATION MUTATION ==========
-  const verifyOTPMutation = useMutation({
-    mutationFn: async (data: { email: string; code: string }) => {
-      console.log('🔐 Verifying OTP:', data)
-      const response = await authApi.verifyOTP(data)
-      return response
-    },
-    onSuccess: () => {
-      setShowOTP(false)
-      setOtpError(null)
-      toast.success('Email verified successfully! 🎉')
-      navigate('/dashboard')
-    },
-    onError: (error: any) => {
-      console.error('❌ OTP verification error:', error)
-      const message = error?.response?.data?.message || 
-                     error?.error?.message || 
-                     'Invalid verification code'
-      setOtpError(message)
-      toast.error(message)
-    }
-  })
-
-  // ========== RESEND OTP MUTATION ==========
-  const resendOTPMutation = useMutation({
-    mutationFn: async (email: string) => {
-      console.log('📧 Resending OTP to:', email)
-      const response = await authApi.resendOTP({ email, type: 'verification' })
-      return response
-    },
-    onSuccess: () => {
-      setOtpError(null)
-      toast.success('New code sent to your email!')
-    },
-    onError: (error: any) => {
-      console.error('❌ Resend OTP error:', error)
-      const message = error?.response?.data?.message || 
-                     error?.error?.message || 
-                     'Failed to resend code'
-      setOtpError(message)
-      toast.error(message)
-    }
-  })
-
   // ========== SUBMIT HANDLER ==========
   const onSubmit: SubmitHandler<RegisterSchemaType> = async (data) => {
     if (isBackendDown) {
@@ -402,38 +158,10 @@ const Register: React.FC = () => {
     }
     
     console.log('📝 Form submitted with data:', data)
-    setIsRegistering(true)
-    try {
-      await registerMutation.mutateAsync(data)
-    } catch (error) {
-      console.error('Registration failed:', error)
-    } finally {
-      setIsRegistering(false)
-    }
+    await registerMutation.mutateAsync(data)
   }
 
-  // ========== OTP HANDLERS ==========
-  const handleVerifyOTP = async (code: string) => {
-    await verifyOTPMutation.mutateAsync({
-      email: registeredEmail,
-      code
-    })
-  }
-
-  const handleResendOTP = async () => {
-    if (registeredEmail) {
-      await resendOTPMutation.mutateAsync(registeredEmail)
-    } else {
-      toast.error('No email found. Please try registering again.')
-      setShowOTP(false)
-    }
-  }
-
-  const handleCloseOTP = () => {
-    setShowOTP(false)
-    setOtpError(null)
-  }
-
+  // ========== BENEFITS DATA ==========
   const benefits = [
     { icon: Shield, title: 'Secure Identity Verification', desc: 'Multi-level verification ensures safe returns', color: '#F4FDFF' },
     { icon: Globe, title: 'Smart Location Matching', desc: 'AI-powered finds items near you instantly', color: '#938BA1' },
@@ -443,8 +171,8 @@ const Register: React.FC = () => {
     { icon: Bell, title: 'Real-time Notifications', desc: 'Instant updates on your items', color: '#938BA1' }
   ]
 
-  // Show loading state
-  if (registerMutation.isPending || sendOTPMutation.isPending || isRegistering) {
+  // ========== LOADING STATE ==========
+  if (registerMutation.isPending) {
     return (
       <div className="fixed inset-0 bg-gradient-to-br from-[#1C448E] via-[#0F2A5E] to-[#1C448E] flex items-center justify-center">
         <div className="text-center">
@@ -455,6 +183,7 @@ const Register: React.FC = () => {
     )
   }
 
+  // ========== RENDER ==========
   return (
     <div className="fixed inset-0 overflow-y-auto overflow-x-hidden bg-gradient-to-br from-[#1C448E] via-[#0F2A5E] to-[#1C448E]">
       <div className="relative z-10 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
@@ -729,7 +458,7 @@ const Register: React.FC = () => {
                     className="w-full bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] text-[#1C448E] font-semibold py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-[#938BA1]/20 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {registerMutation.isPending || isSubmitting ? (
-                      <><div className="w-5 h-5 border-2 border-[#1C448E]/30 border-t-[#1C448E] rounded-full animate-spin" /> Creating Account...</>
+                      <><Loader2 className="w-5 h-5 animate-spin" /> Creating Account...</>
                     ) : (
                       <><Shield size={18} /> Create Secure Account <ArrowRight size={18} /></>
                     )}
@@ -744,20 +473,6 @@ const Register: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* OTP Verification Modal */}
-      <AnimatePresence>
-        {showOTP && (
-          <OTPVerification
-            email={registeredEmail}
-            onVerify={handleVerifyOTP}
-            onResend={handleResendOTP}
-            isLoading={verifyOTPMutation.isPending || resendOTPMutation.isPending}
-            onClose={handleCloseOTP}
-            error={otpError}
-          />
-        )}
-      </AnimatePresence>
     </div>
   )
 }
