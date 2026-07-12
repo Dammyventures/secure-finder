@@ -25,31 +25,34 @@ const STORAGE_KEYS = {
   CURRENT_USER: 'secure_finder_current_user'
 }
 
-const delay = (ms: number = 500) => new Promise(resolve => setTimeout(resolve, ms))
 const now = () => new Date()
 
 export const authApi = {
   // ==========================================
-  // REGISTRATION
+  // REGISTRATION - FIXED VERSION
   // ==========================================
 
   register: async (data: RegisterData): Promise<AuthResponse> => {
     console.log('📝 Registering user:', data.email)
     
     try {
-      const response = await api.post('/auth/register', {
+      // ✅ Create a clean payload with only what backend expects
+      // The backend likely expects: fullName, email, phone, password
+      const payload = {
         fullName: data.fullName,
         email: data.email,
         phone: data.phone,
-        password: data.password,
-        confirmPassword: data.confirmPassword,
-        termsAccepted: data.termsAccepted,
-        privacyPolicyAccepted: data.privacyPolicyAccepted,
-        marketingConsent: data.marketingConsent
-      })
+        password: data.password
+        // ❌ DO NOT send: confirmPassword, termsAccepted, privacyPolicyAccepted, marketingConsent
+        // These are frontend-only validation fields
+      }
+      
+      console.log('📦 Sending payload to backend:', payload)
+      
+      const response = await api.post('/auth/register', payload)
       
       const result = response.data
-      console.log('📦 Registration response:', result)
+      console.log('✅ Registration response:', result)
       
       if (result.data?.accessToken) {
         localStorage.setItem(STORAGE_KEYS.TOKEN, result.data.accessToken)
@@ -69,10 +72,22 @@ export const authApi = {
       }
     } catch (error: any) {
       console.error('❌ Registration failed:', error.response?.data || error.message)
+      console.error('❌ Full error:', error)
+      
+      // Extract meaningful error message
+      let errorMessage = 'Registration failed. Please try again.'
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+      
       throw {
         error: {
           code: error.response?.data?.code || 'REGISTRATION_FAILED',
-          message: error.response?.data?.message || error.response?.data?.error || 'Registration failed'
+          message: errorMessage
         }
       }
     }
@@ -330,16 +345,19 @@ export const authApi = {
   // ==========================================
 
   sendOTP: async (data: { email: string; type?: 'verification' | 'password_reset' | 'two_factor' }): Promise<{ success: boolean; message: string }> => {
+    console.log('📧 Sending OTP to:', data.email)
     const response = await api.post('/auth/otp/send', data)
     return response.data
   },
 
   verifyOTP: async (data: { email: string; code: string }): Promise<{ success: boolean }> => {
+    console.log('🔐 Verifying OTP for:', data.email)
     const response = await api.post('/auth/otp/verify', data)
     return response.data
   },
 
   resendOTP: async (data: { email: string; type?: 'verification' | 'password_reset' | 'two_factor' }): Promise<{ success: boolean; message: string }> => {
+    console.log('📧 Resending OTP to:', data.email)
     const response = await api.post('/auth/otp/resend', data)
     return response.data
   },

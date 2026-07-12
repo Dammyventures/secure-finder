@@ -1,3 +1,4 @@
+// frontend/src/api/client.ts
 import axios from 'axios'
 
 const STORAGE_KEYS = {
@@ -7,10 +8,12 @@ const STORAGE_KEYS = {
 }
 
 const getApiUrl = () => {
-  if (import.meta.env.PROD) {
-    return import.meta.env.VITE_API_URL_PROD || 'https://secure-finder-backend.onrender.com/api'
+  // Development (localhost)
+  if (import.meta.env.DEV) {
+    return import.meta.env.VITE_API_URL_DEV || 'http://localhost:5000/api'
   }
-  return import.meta.env.VITE_API_URL_DEV || 'http://localhost:5000/api'
+  // Production
+  return import.meta.env.VITE_API_URL_PROD || 'https://secure-finder-backend.onrender.com/api'
 }
 
 const API_URL = getApiUrl()
@@ -31,11 +34,9 @@ api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem(STORAGE_KEYS.TOKEN)
     console.log(`📤 ${config.method?.toUpperCase()} ${config.url}`)
+    console.log('🔑 Token:', token ? '✅ Present' : '❌ Missing')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
-      console.log('🔑 Token attached')
-    } else {
-      console.warn('⚠️ No token found')
     }
     return config
   },
@@ -52,26 +53,30 @@ api.interceptors.response.use(
     return response
   },
   async (error) => {
-    console.error('❌ Response error:', error.response?.status, error.response?.data)
-    const originalRequest = error.config
+    console.error('❌ API Error:', error.response?.status, error.response?.data || error.message)
     
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true
-      try {
-        const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN)
-        if (!refreshToken) throw new Error('No refresh token')
-        const response = await axios.post(`${API_URL}/auth/refresh`, { refreshToken })
-        const { accessToken, refreshToken: newRefreshToken } = response.data.data
-        localStorage.setItem(STORAGE_KEYS.TOKEN, accessToken)
-        localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken)
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`
-        return api(originalRequest)
-      } catch (refreshError) {
-        localStorage.removeItem(STORAGE_KEYS.TOKEN)
-        localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN)
-        localStorage.removeItem(STORAGE_KEYS.CURRENT_USER)
-        window.location.href = '/login'
-        return Promise.reject(refreshError)
+    if (error.response?.status === 401) {
+      const originalRequest = error.config
+      if (!originalRequest._retry) {
+        originalRequest._retry = true
+        try {
+          const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN)
+          if (!refreshToken) throw new Error('No refresh token')
+          
+          const response = await axios.post(`${API_URL}/auth/refresh`, { refreshToken })
+          const { accessToken, refreshToken: newRefreshToken } = response.data.data
+          
+          localStorage.setItem(STORAGE_KEYS.TOKEN, accessToken)
+          localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken)
+          
+          originalRequest.headers.Authorization = `Bearer ${accessToken}`
+          return api(originalRequest)
+        } catch (refreshError) {
+          localStorage.removeItem(STORAGE_KEYS.TOKEN)
+          localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN)
+          localStorage.removeItem(STORAGE_KEYS.CURRENT_USER)
+          return Promise.reject(refreshError)
+        }
       }
     }
     return Promise.reject(error)

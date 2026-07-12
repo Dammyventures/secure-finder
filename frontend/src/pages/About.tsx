@@ -1,119 +1,98 @@
-import React, { useEffect } from 'react'
-import { motion, useScroll, useTransform } from 'framer-motion'
+import React from 'react'
+import { motion } from 'framer-motion'
 import type { Variants } from 'framer-motion'
 import { 
   Shield, 
   Users, 
   Award, 
   Heart, 
-  Globe, 
   Clock, 
   CheckCircle,
-  Zap,
-  Lock,
   MapPin,
   Bell,
   Sparkles,
-  Crown,
-  Diamond,
   ArrowRight,
-  Star,
-  Quote,
-  Mail,
-  Facebook,
-  Twitter,
-  Instagram,
-  Linkedin
+  BookOpen,
+  GraduationCap,
+  School,
+  Bus,
+  Coffee,
+  Wifi,
+  Phone
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import Button from '../components/common/UI/Button'
 
 const About: React.FC = () => {
-  const { scrollYProgress } = useScroll()
-
-  const heroY = useTransform(scrollYProgress, [0, 0.5], [0, 100])
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.3], [1, 0.5])
-
   const stats = [
-    { value: '50,000+', label: 'Active Users', icon: Users, color: 'from-[#1C448E] to-[#0F2A5E]' },
-    { value: '10,000+', label: 'Items Reunited', icon: Heart, color: 'from-[#938BA1] to-[#7A8BB8]' },
-    { value: '99.9%', label: 'Success Rate', icon: Award, color: 'from-[#1C448E] to-[#938BA1]' },
-    { value: '48h', label: 'Avg Recovery Time', icon: Clock, color: 'from-[#0F2A5E] to-[#1C448E]' },
-    { value: '150+', label: 'Countries Served', icon: Globe, color: 'from-[#938BA1] to-[#F4FDFF]' },
-    { value: '24/7', label: 'Customer Support', icon: Bell, color: 'from-[#1C448E] to-[#0F2A5E]' },
+    { value: '5,000+', label: 'Caleb Students', icon: Users },
+    { value: '2,500+', label: 'Items Reunited', icon: Heart },
+    { value: '98%', label: 'Success Rate', icon: Award },
+    { value: '12h', label: 'Avg Recovery Time', icon: Clock },
+    { value: '100+', label: 'Lost Reports/Month', icon: Bell },
+    { value: '24/7', label: 'Campus Support', icon: Shield },
   ]
 
   const features = [
     {
-      icon: Shield,
-      title: 'Secure Verification',
-      description: 'Advanced identity verification ensures items are returned to rightful owners securely.',
+      icon: BookOpen,
+      title: 'Lost Textbooks & Notes',
+      description: 'Quickly report and find lost course materials, textbooks, and lecture notes around campus.',
       color: '#1C448E'
     },
     {
-      icon: Zap,
-      title: 'AI-Powered Matching',
-      description: 'Our intelligent algorithm matches lost items with found items instantly.',
+      icon: Phone,
+      title: 'Electronics Recovery',
+      description: 'Reunite with lost phones, laptops, and tablets in Caleb University lecture halls and libraries.',
       color: '#938BA1'
     },
     {
       icon: MapPin,
-      title: 'Location Intelligence',
-      description: 'Smart location tracking helps find items in your vicinity.',
+      title: 'Campus Location Finder',
+      description: 'Pinpoint exactly where items were lost or found across Caleb University campus.',
       color: '#1C448E'
     },
     {
-      icon: Lock,
-      title: 'End-to-End Encryption',
-      description: 'Your data and communications are fully encrypted and secure.',
+      icon: Bus,
+      title: 'Shuttle & Transport Items',
+      description: 'Recover items left behind in campus shuttles, buses, and transportation hubs.',
       color: '#938BA1'
     },
     {
-      icon: Users,
-      title: 'Trusted Community',
-      description: 'Join thousands of verified users helping each other.',
+      icon: Coffee,
+      title: 'Cafeteria & Common Areas',
+      description: 'Find personal items lost in the student center, cafeterias, and common gathering spots.',
       color: '#1C448E'
     },
     {
-      icon: Clock,
-      title: '24/7 Support',
-      description: 'Round-the-clock assistance for all your needs.',
+      icon: Wifi,
+      title: 'Real-Time Notifications',
+      description: 'Get instant alerts when your lost item is found or when someone reports a found item near you.',
       color: '#938BA1'
     }
   ]
 
-  const team = [
+  const howItWorks = [
     {
-      name: 'Sarah Johnson',
-      role: 'CEO & Founder',
-      image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&h=150&fit=crop',
-      bio: 'Former tech executive passionate about community safety'
+      step: '1',
+      title: 'Report Your Lost Item',
+      description: 'Create a detailed report with the item\'s description, location, and time lost on campus.'
     },
     {
-      name: 'Michael Chen',
-      role: 'CTO',
-      image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop',
-      bio: 'AI and blockchain expert with 15+ years experience'
+      step: '2',
+      title: 'Browse Found Items',
+      description: 'Check the found items section to see if someone has already found your belongings.'
     },
     {
-      name: 'Emily Rodriguez',
-      role: 'Head of Operations',
-      image: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop',
-      bio: 'Former logistics director focused on user experience'
+      step: '3',
+      title: 'Get Matched',
+      description: 'Our system automatically matches your lost report with found items in the same location.'
     },
     {
-      name: 'David Kim',
-      role: 'Lead Developer',
-      image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop',
-      bio: 'Full-stack developer passionate about clean code'
+      step: '4',
+      title: 'Reunite & Recover',
+      description: 'Connect with the finder and arrange a pickup on campus to get your item back.'
     }
-  ]
-
-  const milestones = [
-    { year: '2022', title: 'Company Founded', description: 'Started with a vision to reunite lost items', icon: Star },
-    { year: '2023', title: 'Platform Launch', description: 'Launched with 1,000+ beta users', icon: Sparkles },
-    { year: '2024', title: 'Global Expansion', description: 'Expanded to 150+ countries worldwide', icon: Globe },
-    { year: '2025', title: '1M+ Items Reunited', description: 'Major milestone in community impact', icon: Crown },
   ]
 
   const containerVariants: Variants = {
@@ -129,49 +108,36 @@ const About: React.FC = () => {
     visible: { opacity: 1, y: 0, transition: { duration: 0.6 } }
   }
 
-  const timelineVariants: Variants = {
-    hidden: { opacity: 0, x: -50 },
-    visible: (index: number) => ({
-      opacity: 1,
-      x: 0,
-      transition: { duration: 0.5, delay: index * 0.1 }
-    })
-  }
-
   return (
     <div className="fixed inset-0 overflow-y-auto bg-gradient-to-br from-[#1C448E] via-[#0F2A5E] to-[#1C448E]">
       
-      {/* Main Content - Full width with no side padding */}
       <div className="w-full">
         
-        {/* Hero Section - Full Width */}
+        {/* Hero Section */}
         <section className="relative w-full overflow-hidden pt-20 pb-24">
-          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1557804506-669a67965ba0?w=1920&h=400&fit=crop')] bg-cover bg-center opacity-10" />
+          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1541339907198-e08756dedf3f?w=1920&h=400&fit=crop')] bg-cover bg-center opacity-10" />
           
-          <motion.div 
-            style={{ y: heroY, opacity: heroOpacity }}
-            className="relative z-10 w-full max-w-6xl mx-auto text-center px-4"
-          >
+          <motion.div className="relative z-10 w-full max-w-6xl mx-auto text-center px-4">
             <motion.div
               initial={{ scale: 0, rotate: -180 }}
               animate={{ scale: 1, rotate: 0 }}
               transition={{ duration: 0.6, type: "spring" }}
               className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] rounded-2xl shadow-xl mb-6"
             >
-              <Shield className="w-10 h-10 text-[#1C448E]" />
+              <GraduationCap className="w-10 h-10 text-[#1C448E]" />
             </motion.div>
             
             <motion.h1 
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              className="text-5xl md:text-7xl font-bold mb-6"
+              className="text-4xl md:text-6xl font-bold mb-6"
             >
               <span className="bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] bg-clip-text text-transparent">
-                Revolutionizing
+                Your Caleb University
               </span>
               <br />
               <span className="bg-gradient-to-r from-[#938BA1] to-[#F4FDFF] bg-clip-text text-transparent">
-                Lost & Found
+                Lost & Found Hub
               </span>
             </motion.h1>
             
@@ -179,10 +145,10 @@ const About: React.FC = () => {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="text-xl text-[#F4FDFF]/70 max-w-3xl mx-auto mb-8"
+              className="text-lg md:text-xl text-[#F4FDFF]/80 max-w-3xl mx-auto mb-8"
             >
-              We're on a mission to reunite people with their lost belongings using cutting-edge AI technology,
-              blockchain verification, and a passionate community of helpers worldwide.
+              A dedicated platform for Caleb University students to report lost items, 
+              find missing belongings, and connect with fellow students across campus.
             </motion.p>
             
             <motion.div 
@@ -191,15 +157,15 @@ const About: React.FC = () => {
               transition={{ delay: 0.4 }}
               className="flex flex-col sm:flex-row gap-4 justify-center"
             >
-              <Link to="/register">
+              <Link to="/report-lost">
                 <Button size="lg" className="bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] text-[#1C448E] hover:shadow-xl px-8">
-                  Join Our Mission
+                  Report a Lost Item
                   <Sparkles className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
-              <Link to="/contact">
+              <Link to="/browse">
                 <Button variant="outline" size="lg" className="border-[#F4FDFF]/20 text-[#F4FDFF] hover:bg-[#F4FDFF]/10 px-8">
-                  Contact Us
+                  Browse Found Items
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
@@ -207,7 +173,7 @@ const About: React.FC = () => {
           </motion.div>
         </section>
 
-        {/* Stats Section - Full Width */}
+        {/* Stats Section */}
         <section className="w-full py-16 bg-[#F4FDFF]/5 backdrop-blur-sm">
           <div className="w-full max-w-7xl mx-auto px-4">
             <motion.div 
@@ -224,7 +190,7 @@ const About: React.FC = () => {
                   whileHover={{ y: -5 }}
                   className="text-center"
                 >
-                  <div className={`w-12 h-12 mx-auto mb-3 bg-gradient-to-r ${stat.color} rounded-xl flex items-center justify-center shadow-lg`}>
+                  <div className="w-12 h-12 mx-auto mb-3 bg-gradient-to-r from-[#1C448E] to-[#938BA1] rounded-xl flex items-center justify-center shadow-lg">
                     <stat.icon className="w-6 h-6 text-[#F4FDFF]" />
                   </div>
                   <div className="text-xl md:text-2xl font-bold text-[#F4FDFF]">{stat.value}</div>
@@ -235,72 +201,56 @@ const About: React.FC = () => {
           </div>
         </section>
 
-        {/* Mission Section - Full Width */}
+        {/* How It Works Section */}
         <section className="w-full py-20">
           <div className="w-full max-w-6xl mx-auto px-4">
-            <div className="grid lg:grid-cols-2 gap-12 items-center">
-              <motion.div
-                initial={{ opacity: 0, x: -50 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6 }}
-              >
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#F4FDFF]/10 rounded-full mb-6">
-                  <Crown className="w-4 h-4 text-[#F4FDFF]" />
-                  <span className="text-xs text-[#F4FDFF]/80">Our Mission</span>
-                </div>
-                <h2 className="text-3xl md:text-4xl font-bold text-[#F4FDFF] mb-4">
-                  Making the World a
-                  <span className="bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] bg-clip-text text-transparent"> Little Smaller</span>
-                </h2>
-                <p className="text-[#F4FDFF]/60 text-lg mb-6 leading-relaxed">
-                  Every day, thousands of valuable items are lost and never found. We believe that
-                  technology can bridge the gap between loss and recovery, creating a global community
-                  dedicated to helping each other.
-                </p>
-                <p className="text-[#F4FDFF]/60 text-lg mb-8 leading-relaxed">
-                  Our platform combines AI-powered matching, blockchain verification, and a passionate
-                  community to ensure that lost items find their way back home.
-                </p>
-                <div className="flex items-center gap-4">
-                  <div className="flex -space-x-2">
-                    {[1, 2, 3, 4].map((i) => (
-                      <div key={i} className="w-10 h-10 rounded-full bg-gradient-to-r from-[#1C448E] to-[#938BA1] border-2 border-[#F4FDFF]/20 flex items-center justify-center text-[#F4FDFF] text-xs font-bold">
-                        {String.fromCharCode(64 + i)}
-                      </div>
-                    ))}
-                  </div>
-                  <p className="text-[#F4FDFF]/50 text-sm">Trusted by 50,000+ users worldwide</p>
-                </div>
-              </motion.div>
-              
-              <motion.div
-                initial={{ opacity: 0, x: 50 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.6 }}
-                className="relative"
-              >
-                <div className="bg-[#F4FDFF]/10 backdrop-blur-xl rounded-2xl p-6 border border-[#F4FDFF]/20">
-                  <Quote className="w-12 h-12 text-[#F4FDFF] mb-4 opacity-50" />
-                  <p className="text-[#F4FDFF]/80 text-lg italic mb-4">
-                    "I lost my Phone  on campus and thought I'd never see it again.
-                    Secure Finder helped me connect with the person who found it. I'm forever grateful."
-                  </p>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-r from-[#1C448E] to-[#938BA1] rounded-full"></div>
-                    <div>
-                      <p className="text-[#F4FDFF] font-medium">Adedotun Samson</p>
-                      <p className="text-[#F4FDFF]/40 text-sm">Verified User</p>
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="text-center mb-12"
+            >
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#F4FDFF]/10 rounded-full mb-4">
+                <School className="w-4 h-4 text-[#F4FDFF]" />
+                <span className="text-xs text-[#F4FDFF]/80">For Caleb Students</span>
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] bg-clip-text text-transparent">
+                How It Works
+              </h2>
+              <p className="text-[#F4FDFF]/50 mt-2 max-w-2xl mx-auto">
+                Four simple steps to reunite with your lost belongings
+              </p>
+            </motion.div>
+
+            <div className="grid md:grid-cols-4 gap-6">
+              {howItWorks.map((step, index) => (
+                <motion.div
+                  key={step.step}
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className="relative"
+                >
+                  <div className="bg-[#F4FDFF]/10 backdrop-blur-sm rounded-2xl p-6 border border-[#F4FDFF]/20 text-center h-full">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] flex items-center justify-center text-[#1C448E] font-bold text-xl mx-auto mb-4">
+                      {step.step}
                     </div>
+                    <h3 className="text-lg font-bold text-[#F4FDFF] mb-2">{step.title}</h3>
+                    <p className="text-[#F4FDFF]/50 text-sm">{step.description}</p>
                   </div>
-                </div>
-              </motion.div>
+                  {index < 3 && (
+                    <div className="hidden md:block absolute top-1/2 -right-3 transform -translate-y-1/2 text-[#F4FDFF]/20">
+                      <ArrowRight size={24} />
+                    </div>
+                  )}
+                </motion.div>
+              ))}
             </div>
           </div>
         </section>
 
-        {/* Features Section - Full Width */}
+        {/* Features Section */}
         <section className="w-full py-20 bg-[#F4FDFF]/5">
           <div className="w-full max-w-7xl mx-auto px-4">
             <motion.div
@@ -309,15 +259,11 @@ const About: React.FC = () => {
               viewport={{ once: true }}
               className="text-center mb-12"
             >
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#F4FDFF]/10 rounded-full mb-4">
-                <Diamond className="w-4 h-4 text-[#F4FDFF]" />
-                <span className="text-xs text-[#F4FDFF]/80">Why Choose Us</span>
-              </div>
               <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] bg-clip-text text-transparent">
-                Powerful Features
+                Why Caleb Students Love Us
               </h2>
               <p className="text-[#F4FDFF]/50 mt-2 max-w-2xl mx-auto">
-                We combine cutting-edge technology with human compassion
+                Features designed specifically for the Caleb University community
               </p>
             </motion.div>
 
@@ -346,132 +292,60 @@ const About: React.FC = () => {
           </div>
         </section>
 
-        {/* Milestones Section - Full Width */}
+        {/* Testimonial Section */}
         <section className="w-full py-20">
-          <div className="w-full max-w-6xl mx-auto px-4">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-center mb-12"
-            >
-              <h2 className="text-3xl md:text-4xl font-bold text-[#F4FDFF] mb-2">Our Journey</h2>
-              <p className="text-[#F4FDFF]/50">Key milestones in our story</p>
-            </motion.div>
-
-            <div className="relative">
-              <div className="absolute left-1/2 transform -translate-x-1/2 w-0.5 h-full bg-gradient-to-b from-[#F4FDFF] to-transparent hidden md:block" />
-              
-              <div className="space-y-8">
-                {milestones.map((milestone, index) => (
-                  <motion.div
-                    key={milestone.year}
-                    custom={index}
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true }}
-                    variants={timelineVariants}
-                    className={`flex flex-col md:flex-row items-center gap-6 ${
-                      index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'
-                    }`}
-                  >
-                    <div className={`flex-1 ${index % 2 === 0 ? 'md:text-right' : 'md:text-left'}`}>
-                      <div className="bg-[#F4FDFF]/10 backdrop-blur-sm rounded-2xl p-6 border border-[#F4FDFF]/20">
-                        <div className="inline-flex items-center gap-2 mb-3">
-                          <milestone.icon className="w-5 h-5 text-[#F4FDFF]" />
-                          <span className="text-2xl font-bold text-[#F4FDFF]">{milestone.year}</span>
-                        </div>
-                        <h3 className="text-xl font-bold text-[#F4FDFF] mb-2">{milestone.title}</h3>
-                        <p className="text-[#F4FDFF]/50">{milestone.description}</p>
-                      </div>
-                    </div>
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] flex items-center justify-center z-10">
-                      <CheckCircle className="w-6 h-6 text-[#1C448E]" />
-                    </div>
-                    <div className="flex-1" />
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Team Section - Full Width */}
-        <section className="w-full py-20 bg-[#F4FDFF]/5">
-          <div className="w-full max-w-7xl mx-auto px-4">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-center mb-12"
-            >
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-[#F4FDFF]/10 rounded-full mb-4">
-                <Users className="w-4 h-4 text-[#F4FDFF]" />
-                <span className="text-xs text-[#F4FDFF]/80">Our Team</span>
-              </div>
-              <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] bg-clip-text text-transparent">
-                The Minds Behind the Magic
-              </h2>
-              <p className="text-[#F4FDFF]/50 mt-2">Passionate individuals dedicated to your success</p>
-            </motion.div>
-
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"
-            >
-              {team.map((member) => (
-                <motion.div
-                  key={member.name}
-                  variants={itemVariants}
-                  whileHover={{ y: -5 }}
-                  className="bg-[#F4FDFF]/10 backdrop-blur-sm rounded-2xl p-6 text-center border border-[#F4FDFF]/20"
-                >
-                  <img
-                    src={member.image}
-                    alt={member.name}
-                    className="w-32 h-32 rounded-full mx-auto mb-4 object-cover border-4 border-[#F4FDFF]/20"
-                  />
-                  <h3 className="text-xl font-bold text-[#F4FDFF] mb-1">{member.name}</h3>
-                  <p className="text-[#938BA1] text-sm mb-2">{member.role}</p>
-                  <p className="text-[#F4FDFF]/40 text-xs">{member.bio}</p>
-                </motion.div>
-              ))}
-            </motion.div>
-          </div>
-        </section>
-
-        {/* CTA Section - Full Width */}
-        <section className="w-full py-20">
-          <div className="w-full max-w-4xl mx-auto px-4 text-center">
+          <div className="w-full max-w-4xl mx-auto px-4">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, type: "spring" }}
-              className="bg-[#F4FDFF]/10 backdrop-blur-xl rounded-3xl p-12 border border-[#F4FDFF]/20"
+              className="bg-[#F4FDFF]/10 backdrop-blur-xl rounded-3xl p-12 border border-[#F4FDFF]/20 text-center"
             >
-              <Crown className="w-16 h-16 text-[#F4FDFF] mx-auto mb-6" />
+              <Heart className="w-16 h-16 text-[#F4FDFF] mx-auto mb-6" />
+              <blockquote className="text-xl md:text-2xl text-[#F4FDFF]/80 italic mb-6">
+                "I lost my laptop in the library during exams and thought all my work was gone forever. 
+                Thanks to this platform, a fellow Caleb student found it and returned it within 4 hours!"
+              </blockquote>
+              <div className="flex items-center justify-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-r from-[#1C448E] to-[#938BA1] rounded-full flex items-center justify-center text-[#F4FDFF] font-bold">
+                  CE
+                </div>
+                <div className="text-left">
+                  <p className="text-[#F4FDFF] font-medium">Chidi Eze</p>
+                  <p className="text-[#F4FDFF]/40 text-sm">Caleb Student • Class of 2026</p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="w-full py-20 bg-[#F4FDFF]/5">
+          <div className="w-full max-w-4xl mx-auto px-4 text-center">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
               <h2 className="text-3xl md:text-4xl font-bold text-[#F4FDFF] mb-4">
-                Ready to Make a Difference?
+                Lost Something on Campus?
               </h2>
               <p className="text-[#F4FDFF]/60 text-lg mb-8 max-w-2xl mx-auto">
-                Join thousands of users who are already helping reunite lost items with their owners.
-                Together, we can make the world a little smaller.
+                Join hundreds of Caleb students who are helping each other recover lost items. 
+                Don't wait - report your lost item now and get back to what matters most.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/register">
+                <Link to="/report-lost">
                   <Button size="lg" className="bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] text-[#1C448E] hover:shadow-xl px-8">
-                    Get Started Now
+                    Report Lost Item
                     <Sparkles className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
-                <Link to="/contact">
+                <Link to="/browse">
                   <Button variant="outline" size="lg" className="border-[#F4FDFF]/20 text-[#F4FDFF] hover:bg-[#F4FDFF]/10 px-8">
-                    Contact Us
-                    <Mail className="ml-2 h-4 w-4" />
+                    Browse Found Items
+                    <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </Link>
               </div>
@@ -479,32 +353,18 @@ const About: React.FC = () => {
           </div>
         </section>
 
-        {/* Footer - Full Width */}
+        {/* Footer */}
         <footer className="w-full border-t border-[#F4FDFF]/10 py-8">
           <div className="w-full max-w-7xl mx-auto px-4">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
               <div className="flex items-center gap-2">
-                <Shield className="w-6 h-6 text-[#F4FDFF]" />
+                <GraduationCap className="w-6 h-6 text-[#F4FDFF]" />
                 <span className="text-[#F4FDFF] font-bold">Secure Finder</span>
-                <span className="text-[#F4FDFF]/40 text-sm">© 2025. All rights reserved.</span>
-              </div>
-              <div className="flex gap-6">
-                <a href="#" className="text-[#F4FDFF]/40 hover:text-[#F4FDFF] transition-colors">
-                  <Facebook size={18} />
-                </a>
-                <a href="#" className="text-[#F4FDFF]/40 hover:text-[#F4FDFF] transition-colors">
-                  <Twitter size={18} />
-                </a>
-                <a href="#" className="text-[#F4FDFF]/40 hover:text-[#F4FDFF] transition-colors">
-                  <Instagram size={18} />
-                </a>
-                <a href="#" className="text-[#F4FDFF]/40 hover:text-[#F4FDFF] transition-colors">
-                  <Linkedin size={18} />
-                </a>
+                <span className="text-[#F4FDFF]/40 text-sm">© 2026. All rights reserved.</span>
               </div>
               <div className="flex gap-4">
-                <a href="/privacy" className="text-[#F4FDFF]/40 hover:text-[#F4FDFF] text-sm transition-colors">Privacy</a>
-                <a href="/terms" className="text-[#F4FDFF]/40 hover:text-[#F4FDFF] text-sm transition-colors">Terms</a>
+                <a href="/privacy" className="text-[#F4FDFF]/40 hover:text-[#F4FDFF] text-sm transition-colors">Privacy Policy</a>
+                <a href="/terms" className="text-[#F4FDFF]/40 hover:text-[#F4FDFF] text-sm transition-colors">Terms of Use</a>
                 <a href="/contact" className="text-[#F4FDFF]/40 hover:text-[#F4FDFF] text-sm transition-colors">Contact</a>
               </div>
             </div>
