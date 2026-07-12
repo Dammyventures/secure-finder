@@ -10,7 +10,8 @@ const STORAGE_KEYS = {
 const getApiUrl = () => {
   // Development (localhost)
   if (import.meta.env.DEV) {
-    return import.meta.env.VITE_API_URL_DEV || 'http://localhost:5000/api'
+    // Use the environment variable or fallback to localhost
+    return import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
   }
   // Production
   return import.meta.env.VITE_API_URL_PROD || 'https://secure-finder-backend.onrender.com/api'
@@ -19,14 +20,16 @@ const getApiUrl = () => {
 const API_URL = getApiUrl()
 console.log(`🔗 API URL: ${API_URL}`)
 
+// Create axios instance with proper configuration
 export const api = axios.create({
   baseURL: API_URL,
-  withCredentials: true,
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
-  }
+  },
+  // Remove withCredentials if you're not using cookies
+  // withCredentials: true, // Uncomment if using cookies for auth
 })
 
 // Request interceptor
@@ -35,9 +38,14 @@ api.interceptors.request.use(
     const token = localStorage.getItem(STORAGE_KEYS.TOKEN)
     console.log(`📤 ${config.method?.toUpperCase()} ${config.url}`)
     console.log('🔑 Token:', token ? '✅ Present' : '❌ Missing')
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
+    
+    // Log the full request URL for debugging
+    console.log('🌐 Full URL:', `${config.baseURL}${config.url}`)
+    
     return config
   },
   (error) => {
@@ -53,8 +61,21 @@ api.interceptors.response.use(
     return response
   },
   async (error) => {
+    // Handle network errors
+    if (error.code === 'ERR_NETWORK') {
+      console.error('🌐 Network Error - Backend might not be running')
+      console.error('💡 Make sure your backend is running on:', API_URL)
+      return Promise.reject({
+        error: {
+          code: 'NETWORK_ERROR',
+          message: 'Cannot connect to server. Please make sure the backend is running.'
+        }
+      })
+    }
+    
     console.error('❌ API Error:', error.response?.status, error.response?.data || error.message)
     
+    // Handle 401 Unauthorized
     if (error.response?.status === 401) {
       const originalRequest = error.config
       if (!originalRequest._retry) {
@@ -72,15 +93,43 @@ api.interceptors.response.use(
           originalRequest.headers.Authorization = `Bearer ${accessToken}`
           return api(originalRequest)
         } catch (refreshError) {
+          console.error('❌ Refresh token failed:', refreshError)
           localStorage.removeItem(STORAGE_KEYS.TOKEN)
           localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN)
           localStorage.removeItem(STORAGE_KEYS.CURRENT_USER)
+          // Redirect to login if on protected page
+          if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+            window.location.href = '/login'
+          }
           return Promise.reject(refreshError)
         }
       }
     }
-    return Promise.reject(error)
+    
+    // Return error with better structure
+    return Promise.reject({
+      error: error.response?.data?.error || {
+        code: error.response?.status || 'UNKNOWN_ERROR',
+        message: error.response?.data?.message || error.message || 'An error occurred'
+      }
+    })
   }
 )
+
+// Helper function to test connection
+export const testConnection = async () => {
+  try {
+    console.log('🔍 Testing connection to:', API_URL)
+    const response = await api.get('/health')
+    console.log('✅ Connection successful:', response.data)
+    return true
+  } catch (error: any) {
+    console.error('❌ Connection failed:', error.message)
+    if (error.code === 'ERR_NETWORK') {
+      console.error('💡 Make sure your backend is running on:', API_URL)
+    }
+    return false
+  }
+}
 
 export default api

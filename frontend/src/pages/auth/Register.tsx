@@ -11,11 +11,12 @@ import {
   Mail, Lock, User, Phone, CheckCircle, Eye, EyeOff, 
   AlertCircle, Shield, Crown, Diamond, ArrowRight, Award, 
   Heart, Globe, Zap, Bell, Clock, Users, Loader2, Check,
-  Sparkles, XCircle
+  XCircle, WifiOff
 } from 'lucide-react'
 
 import { authApi } from '../../api/auth.api'
 import type { RegisterData } from '../../types/auth.types'
+// Remove this import: import { testBackendConnection } from '../../utils/testApi'
 
 // ========== PASSWORD STRENGTH ==========
 const getPasswordStrength = (password: string) => {
@@ -229,6 +230,7 @@ const Register: React.FC = () => {
   const [registeredEmail, setRegisteredEmail] = useState('')
   const [isRegistering, setIsRegistering] = useState(false)
   const [otpError, setOtpError] = useState<string | null>(null)
+  const [isBackendDown, setIsBackendDown] = useState(false)
 
   const {
     register, handleSubmit, watch, formState: { errors, isSubmitting }
@@ -250,6 +252,30 @@ const Register: React.FC = () => {
     setPasswordStrength(getPasswordStrength(watchPassword))
   }, [watchPassword])
 
+  // Test backend connection on mount - inline version without import
+  useEffect(() => {
+    const checkBackend = async () => {
+      try {
+        console.log('🔍 Testing backend connection...')
+        // Simple fetch to test if backend is accessible
+        const response = await fetch('http://localhost:5000/api/health')
+        if (response.ok) {
+          console.log('✅ Backend is running')
+          setIsBackendDown(false)
+        } else {
+          console.error('❌ Backend returned error:', response.status)
+          setIsBackendDown(true)
+          toast.error('Cannot connect to server. Please make sure the backend is running.')
+        }
+      } catch (error) {
+        console.error('❌ Backend connection failed:', error)
+        setIsBackendDown(true)
+        toast.error('Cannot connect to server. Please make sure the backend is running on port 5000.')
+      }
+    }
+    checkBackend()
+  }, [])
+
   // ========== SEND OTP MUTATION ==========
   const sendOTPMutation = useMutation({
     mutationFn: async (email: string) => {
@@ -261,25 +287,22 @@ const Register: React.FC = () => {
   })
 
   // ========== REGISTER MUTATION ==========
- const registerMutation = useMutation({
-  mutationFn: async (data: RegisterSchemaType) => {
-    // ✅ Use 'as any' to bypass TypeScript strict checking
-    // OR create a new object with only the fields backend expects
-    const registerData = {
-      fullName: data.fullName,
-      email: data.email,
-      phone: data.phone,
-      password: data.password
-    } as any // 👈 This fixes the TypeScript error
-    
-    console.log('📝 Sending register data:', registerData)
-    return authApi.register(registerData)
-  },
+  const registerMutation = useMutation({
+    mutationFn: async (data: RegisterSchemaType) => {
+      const registerData = {
+        fullName: data.fullName,
+        email: data.email,
+        phone: data.phone,
+        password: data.password
+      } as RegisterData
+      
+      console.log('📝 Sending register data:', registerData)
+      return authApi.register(registerData)
+    },
     onSuccess: async (response) => {
       console.log('✅ Registration success:', response)
       setRegisteredEmail(response.user.email)
       
-      // ✅ Send OTP after successful registration
       try {
         await sendOTPMutation.mutateAsync(response.user.email)
         setShowOTP(true)
@@ -292,14 +315,19 @@ const Register: React.FC = () => {
                            'Account created but OTP failed. Please request a new code.'
         setOtpError(errorMessage)
         toast.error(errorMessage)
-        // ✅ Still show OTP modal so user can request resend
         setShowOTP(true)
       }
     },
     onError: (error: any) => {
       console.error('❌ Registration error details:', error)
       
-      // ✅ Better error handling with specific messages
+      // Handle network errors specifically
+      if (error?.error?.code === 'NETWORK_ERROR' || error?.code === 'ERR_NETWORK') {
+        setIsBackendDown(true)
+        toast.error('Network error: Cannot connect to server. Please check if backend is running.')
+        return
+      }
+      
       let errorMessage = 'Registration failed. Please try again.'
       
       if (error?.response?.data?.message) {
@@ -310,15 +338,12 @@ const Register: React.FC = () => {
         errorMessage = error.message
       }
       
-      // ✅ Handle specific error cases
       if (errorMessage.toLowerCase().includes('email already exists') || 
           errorMessage.toLowerCase().includes('email already registered')) {
         errorMessage = 'This email is already registered. Please login or use a different email.'
       } else if (errorMessage.toLowerCase().includes('phone already exists') || 
                  errorMessage.toLowerCase().includes('phone already registered')) {
         errorMessage = 'This phone number is already registered. Please use a different number.'
-      } else if (errorMessage.toLowerCase().includes('password')) {
-        errorMessage = 'Password does not meet security requirements. Please use a stronger password.'
       }
       
       toast.error(errorMessage)
@@ -336,7 +361,6 @@ const Register: React.FC = () => {
       setShowOTP(false)
       setOtpError(null)
       toast.success('Email verified successfully! 🎉')
-      // ✅ Navigate to dashboard after verification
       navigate('/dashboard')
     },
     onError: (error: any) => {
@@ -372,6 +396,11 @@ const Register: React.FC = () => {
 
   // ========== SUBMIT HANDLER ==========
   const onSubmit: SubmitHandler<RegisterSchemaType> = async (data) => {
+    if (isBackendDown) {
+      toast.error('Cannot connect to server. Please check your connection.')
+      return
+    }
+    
     console.log('📝 Form submitted with data:', data)
     setIsRegistering(true)
     try {
@@ -457,6 +486,21 @@ const Register: React.FC = () => {
             </h1>
             <p className="mt-2 text-[#F4FDFF]/50">Join the revolution in lost and found technology</p>
           </motion.div>
+
+          {/* Backend Status Warning */}
+          {isBackendDown && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="max-w-2xl mx-auto mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-center gap-3"
+            >
+              <WifiOff className="w-5 h-5 text-red-400 flex-shrink-0" />
+              <div>
+                <p className="text-sm text-red-400 font-medium">Server Connection Error</p>
+                <p className="text-xs text-red-400/70">Cannot connect to backend server. Please make sure the server is running on port 5000.</p>
+              </div>
+            </motion.div>
+          )}
 
           <div className="grid lg:grid-cols-2 gap-6">
             
@@ -681,7 +725,7 @@ const Register: React.FC = () => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     type="submit"
-                    disabled={registerMutation.isPending || isSubmitting || !watchTermsAccepted || !watchPrivacyAccepted}
+                    disabled={registerMutation.isPending || isSubmitting || !watchTermsAccepted || !watchPrivacyAccepted || isBackendDown}
                     className="w-full bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] text-[#1C448E] font-semibold py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-[#938BA1]/20 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {registerMutation.isPending || isSubmitting ? (
