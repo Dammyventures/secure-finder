@@ -10,14 +10,11 @@ import toast from 'react-hot-toast'
 import { 
   Mail, Lock, User, Phone, CheckCircle, Eye, EyeOff, 
   AlertCircle, Shield, Crown, Diamond, ArrowRight, Award, 
-  Heart, Globe, Zap, Bell, Clock, Users, Loader2,
-  WifiOff
+  Heart, Globe, Zap, Bell, Clock, Users, Loader2
 } from 'lucide-react'
 
 import { authApi } from '../../api/auth.api'
 import type { RegisterData } from '../../types/auth.types'
-// ✅ Import the API client to use its baseURL for health checks
-import api from '../../api/client'
 
 // ========== PASSWORD STRENGTH ==========
 const getPasswordStrength = (password: string) => {
@@ -60,7 +57,6 @@ const Register: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [passwordStrength, setPasswordStrength] = useState(getPasswordStrength(''))
   const [isHovered, setIsHovered] = useState(false)
-  const [isBackendDown, setIsBackendDown] = useState(false)
 
   const {
     register, handleSubmit, watch, formState: { errors, isSubmitting }
@@ -81,25 +77,6 @@ const Register: React.FC = () => {
   useEffect(() => {
     setPasswordStrength(getPasswordStrength(watchPassword))
   }, [watchPassword])
-
-  // ✅ Health check – uses the API client's baseURL (Render in production, localhost in dev)
-  useEffect(() => {
-    const checkBackend = async () => {
-      try {
-        const response = await api.get('/health')
-        if (response.status === 200) {
-          console.log('✅ Backend is running')
-          setIsBackendDown(false)
-        } else {
-          setIsBackendDown(true)
-        }
-      } catch (error) {
-        console.error('❌ Backend connection failed:', error)
-        setIsBackendDown(true)
-      }
-    }
-    checkBackend()
-  }, [])
 
   // ========== REGISTER MUTATION ==========
   const registerMutation = useMutation({
@@ -122,12 +99,6 @@ const Register: React.FC = () => {
     onError: (error: any) => {
       console.error('❌ Registration error:', error)
       
-      if (error?.error?.code === 'NETWORK_ERROR' || error?.code === 'ERR_NETWORK') {
-        setIsBackendDown(true)
-        toast.error('Network error: Cannot connect to server. Please check if backend is running.')
-        return
-      }
-      
       let errorMessage = 'Registration failed. Please try again.'
       
       if (error?.response?.data?.message) {
@@ -144,6 +115,8 @@ const Register: React.FC = () => {
       } else if (errorMessage.toLowerCase().includes('phone already exists') || 
                  errorMessage.toLowerCase().includes('phone already registered')) {
         errorMessage = 'This phone number is already registered. Please use a different number.'
+      } else if (errorMessage.toLowerCase().includes('network')) {
+        errorMessage = 'Network error. Please check your connection and try again.'
       }
       
       toast.error(errorMessage)
@@ -152,11 +125,6 @@ const Register: React.FC = () => {
 
   // ========== SUBMIT HANDLER ==========
   const onSubmit: SubmitHandler<RegisterSchemaType> = async (data) => {
-    if (isBackendDown) {
-      toast.error('Cannot connect to server. Please check your connection.')
-      return
-    }
-    
     console.log('📝 Form submitted with data:', data)
     await registerMutation.mutateAsync(data)
   }
@@ -215,21 +183,6 @@ const Register: React.FC = () => {
             </h1>
             <p className="mt-2 text-[#F4FDFF]/50">Join the revolution in lost and found technology</p>
           </motion.div>
-
-          {/* Backend Status Warning */}
-          {isBackendDown && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="max-w-2xl mx-auto mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-center gap-3"
-            >
-              <WifiOff className="w-5 h-5 text-red-400 flex-shrink-0" />
-              <div>
-                <p className="text-sm text-red-400 font-medium">Server Connection Error</p>
-                <p className="text-xs text-red-400/70">Cannot connect to backend server. Please make sure the server is running on port 5000.</p>
-              </div>
-            </motion.div>
-          )}
 
           <div className="grid lg:grid-cols-2 gap-6">
             
@@ -454,7 +407,7 @@ const Register: React.FC = () => {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     type="submit"
-                    disabled={registerMutation.isPending || isSubmitting || !watchTermsAccepted || !watchPrivacyAccepted || isBackendDown}
+                    disabled={registerMutation.isPending || isSubmitting || !watchTermsAccepted || !watchPrivacyAccepted}
                     className="w-full bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] text-[#1C448E] font-semibold py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-[#938BA1]/20 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {registerMutation.isPending || isSubmitting ? (
