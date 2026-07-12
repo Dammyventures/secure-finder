@@ -1,4 +1,3 @@
-// frontend/src/api/client.ts
 import axios from 'axios'
 
 const STORAGE_KEYS = {
@@ -7,29 +6,31 @@ const STORAGE_KEYS = {
   CURRENT_USER: 'secure_finder_current_user'
 }
 
-const getApiUrl = () => {
-  // Development (localhost)
-  if (import.meta.env.DEV) {
-    // Use the environment variable or fallback to localhost
-    return import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+const getApiUrl = (): string => {
+  // ✅ On Vercel (production) always use the production URL
+  if (import.meta.env.PROD) {
+    const prodUrl = import.meta.env.VITE_API_URL_PROD
+    if (!prodUrl) {
+      console.error('❌ VITE_API_URL_PROD is not defined on Vercel! Falling back to hardcoded URL.')
+      return 'https://secure-finder-backend.onrender.com/api'
+    }
+    return prodUrl
   }
-  // Production
-  return import.meta.env.VITE_API_URL_PROD || 'https://secure-finder-backend.onrender.com/api'
+
+  // In development, use localhost or the dev variable
+  return import.meta.env.VITE_API_URL_DEV || 'http://localhost:5000/api'
 }
 
 const API_URL = getApiUrl()
 console.log(`🔗 API URL: ${API_URL}`)
 
-// Create axios instance with proper configuration
 export const api = axios.create({
   baseURL: API_URL,
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
-  },
-  // Remove withCredentials if you're not using cookies
-  // withCredentials: true, // Uncomment if using cookies for auth
+  }
 })
 
 // Request interceptor
@@ -38,14 +39,10 @@ api.interceptors.request.use(
     const token = localStorage.getItem(STORAGE_KEYS.TOKEN)
     console.log(`📤 ${config.method?.toUpperCase()} ${config.url}`)
     console.log('🔑 Token:', token ? '✅ Present' : '❌ Missing')
-    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
-    
-    // Log the full request URL for debugging
     console.log('🌐 Full URL:', `${config.baseURL}${config.url}`)
-    
     return config
   },
   (error) => {
@@ -61,7 +58,7 @@ api.interceptors.response.use(
     return response
   },
   async (error) => {
-    // Handle network errors
+    // Network errors
     if (error.code === 'ERR_NETWORK') {
       console.error('🌐 Network Error - Backend might not be running')
       console.error('💡 Make sure your backend is running on:', API_URL)
@@ -72,10 +69,10 @@ api.interceptors.response.use(
         }
       })
     }
-    
+
     console.error('❌ API Error:', error.response?.status, error.response?.data || error.message)
-    
-    // Handle 401 Unauthorized
+
+    // 401 Unauthorized – try refresh token
     if (error.response?.status === 401) {
       const originalRequest = error.config
       if (!originalRequest._retry) {
@@ -83,13 +80,13 @@ api.interceptors.response.use(
         try {
           const refreshToken = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN)
           if (!refreshToken) throw new Error('No refresh token')
-          
+
           const response = await axios.post(`${API_URL}/auth/refresh`, { refreshToken })
           const { accessToken, refreshToken: newRefreshToken } = response.data.data
-          
+
           localStorage.setItem(STORAGE_KEYS.TOKEN, accessToken)
           localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, newRefreshToken)
-          
+
           originalRequest.headers.Authorization = `Bearer ${accessToken}`
           return api(originalRequest)
         } catch (refreshError) {
@@ -97,7 +94,6 @@ api.interceptors.response.use(
           localStorage.removeItem(STORAGE_KEYS.TOKEN)
           localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN)
           localStorage.removeItem(STORAGE_KEYS.CURRENT_USER)
-          // Redirect to login if on protected page
           if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
             window.location.href = '/login'
           }
@@ -105,8 +101,7 @@ api.interceptors.response.use(
         }
       }
     }
-    
-    // Return error with better structure
+
     return Promise.reject({
       error: error.response?.data?.error || {
         code: error.response?.status || 'UNKNOWN_ERROR',
@@ -116,7 +111,7 @@ api.interceptors.response.use(
   }
 )
 
-// Helper function to test connection
+// Helper to test connection
 export const testConnection = async () => {
   try {
     console.log('🔍 Testing connection to:', API_URL)
