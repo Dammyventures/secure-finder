@@ -1,25 +1,21 @@
-import React, { useState, useEffect, useRef } from 'react'
-import type { ChangeEvent } from 'react'
-import { Search, MapPin, Navigation, X, Target } from 'lucide-react'
-import Button from '../common/UI/Button'
-import Input from '../common/UI/Input'
-import LocationPicker from './LocationPicker'
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, MapPin, Navigation, X, Target } from 'lucide-react';
 
 interface GeoSearchProps {
   onLocationSelect: (location: {
-    lat: number
-    lng: number
-    address: string
-    radius?: number
-  }) => void
-  onRadiusChange?: (radius: number) => void
+    lat: number;
+    lng: number;
+    address: string;
+    radius?: number;
+  }) => void;
+  onRadiusChange?: (radius: number) => void;
   initialLocation?: {
-    lat: number
-    lng: number
-    address: string
-  }
-  showRadiusControl?: boolean
-  className?: string
+    lat: number;
+    lng: number;
+    address: string;
+  };
+  showRadiusControl?: boolean;
+  className?: string;
 }
 
 const GeoSearch: React.FC<GeoSearchProps> = ({
@@ -29,257 +25,201 @@ const GeoSearch: React.FC<GeoSearchProps> = ({
   showRadiusControl = true,
   className = '',
 }) => {
-  const [searchQuery, setSearchQuery] = useState<string>('')
-  const [searchResults, setSearchResults] = useState<any[]>([])
-  const [isSearching, setIsSearching] = useState<boolean>(false)
+  const [searchQuery, setSearchQuery] = useState<string>(
+    initialLocation?.address || ''
+  );
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState<boolean>(false);
   const [selectedLocation, setSelectedLocation] = useState<{
-    lat: number
-    lng: number
-    address: string
-  } | null>(initialLocation || null)
-  const [radius, setRadius] = useState<number>(10) // in kilometers
-  const [showMap, setShowMap] = useState<boolean>(false)
-  const [recentSearches, setRecentSearches] = useState<string[]>([])
-  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+    lat: number;
+    lng: number;
+    address: string;
+  } | null>(initialLocation || null);
+  const [radius, setRadius] = useState<number>(10);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined
+  );
 
   // Load recent searches from localStorage
   useEffect(() => {
-    const savedSearches = localStorage.getItem('recentGeoSearch')
-    if (savedSearches) {
-      setRecentSearches(JSON.parse(savedSearches))
-    }
-  }, [])
+    const saved = localStorage.getItem('recentGeoSearch');
+    if (saved) setRecentSearches(JSON.parse(saved));
+  }, []);
 
-  // Save to recent searches
-  const saveToRecentSearches = (query: string) => {
-    const updatedSearches = [
-      query,
-      ...recentSearches.filter(s => s !== query),
-    ].slice(0, 5)
-    setRecentSearches(updatedSearches)
-    localStorage.setItem('recentGeoSearch', JSON.stringify(updatedSearches))
-  }
+  const saveToRecent = (query: string) => {
+    const updated = [query, ...recentSearches.filter((s) => s !== query)].slice(
+      0,
+      5
+    );
+    setRecentSearches(updated);
+    localStorage.setItem('recentGeoSearch', JSON.stringify(updated));
+  };
 
   const searchLocation = async (query: string) => {
     if (!query.trim()) {
-      setSearchResults([])
-      return
+      setSearchResults([]);
+      return;
     }
-
-    setIsSearching(true)
+    setIsSearching(true);
     try {
-      // Restrict results to Nigeria
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&addressdetails=1&countrycodes=ng`
-      )
-      const data = await response.json()
-      setSearchResults(data)
-      saveToRecentSearches(query)
-    } catch (error) {
-      console.error('Error searching location:', error)
-      setSearchResults([])
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+          query
+        )}&format=json&limit=5&addressdetails=1&countrycodes=ng`
+      );
+      const data = await res.json();
+      setSearchResults(data);
+      saveToRecent(query);
+    } catch (err) {
+      console.error('Search error:', err);
+      setSearchResults([]);
     } finally {
-      setIsSearching(false)
+      setIsSearching(false);
     }
-  }
+  };
 
   const handleSearchChange = (value: string) => {
-    setSearchQuery(value)
-    
-    // Debounce search
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current)
-    }
-    
+    setSearchQuery(value);
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
     searchTimeoutRef.current = setTimeout(() => {
-      if (value.trim()) {
-        searchLocation(value)
-      } else {
-        setSearchResults([])
-      }
-    }, 500)
-  }
+      if (value.trim()) searchLocation(value);
+      else setSearchResults([]);
+    }, 500);
+  };
 
-  const handleLocationSelect = (location: any) => {
-    const selected = {
-      lat: parseFloat(location.lat),
-      lng: parseFloat(location.lon),
-      address: location.display_name,
-    }
-    
-    setSelectedLocation(selected)
-    setSearchQuery(location.display_name)
-    setSearchResults([])
-    setShowMap(false)
-    
-    onLocationSelect({
-      ...selected,
-      radius: showRadiusControl ? radius : undefined,
-    })
-  }
-
-  const handleMapLocationSelect = (location: {
-    lat: number
-    lng: number
-    address: string
-  }) => {
-    setSelectedLocation(location)
-    setSearchQuery(location.address)
-    setShowMap(false)
-    
-    onLocationSelect({
-      ...location,
-      radius: showRadiusControl ? radius : undefined,
-    })
-  }
+  const handleResultClick = (result: any) => {
+    const loc = {
+      lat: parseFloat(result.lat),
+      lng: parseFloat(result.lon),
+      address: result.display_name,
+    };
+    setSelectedLocation(loc);
+    setSearchQuery(loc.address);
+    setSearchResults([]);
+    onLocationSelect({ ...loc, radius: showRadiusControl ? radius : undefined });
+  };
 
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser')
-      return
+      alert('Geolocation not supported');
+      return;
     }
-
-    setIsSearching(true)
+    setIsSearching(true);
     navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords
-        
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
         try {
-          // Reverse geocode
-          const response = await fetch(
+          const res = await fetch(
             `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
-          )
-          const data = await response.json()
-          
-          const location = {
+          );
+          const data = await res.json();
+          const loc = {
             lat: latitude,
             lng: longitude,
             address: data.display_name || 'Current Location',
-          }
-          
-          setSelectedLocation(location)
-          setSearchQuery(location.address)
-          
-          onLocationSelect({
-            ...location,
-            radius: showRadiusControl ? radius : undefined,
-          })
-        } catch (error) {
-          console.error('Error reverse geocoding:', error)
-          const location = {
+          };
+          setSelectedLocation(loc);
+          setSearchQuery(loc.address);
+          onLocationSelect({ ...loc, radius: showRadiusControl ? radius : undefined });
+        } catch {
+          const loc = {
             lat: latitude,
             lng: longitude,
             address: 'Current Location',
-          }
-          setSelectedLocation(location)
-          setSearchQuery(location.address)
-          
-          onLocationSelect({
-            ...location,
-            radius: showRadiusControl ? radius : undefined,
-          })
+          };
+          setSelectedLocation(loc);
+          setSearchQuery(loc.address);
+          onLocationSelect({ ...loc, radius: showRadiusControl ? radius : undefined });
         } finally {
-          setIsSearching(false)
+          setIsSearching(false);
         }
       },
-      (error) => {
-        console.error('Error getting location:', error)
-        alert('Unable to retrieve your location. Please enable location services.')
-        setIsSearching(false)
+      (err) => {
+        console.error(err);
+        alert('Unable to get location. Please enable location services.');
+        setIsSearching(false);
       }
-    )
-  }
+    );
+  };
 
   const clearSearch = () => {
-    setSearchQuery('')
-    setSearchResults([])
-    setSelectedLocation(null)
-    setShowMap(false)
-    onLocationSelect({
-      lat: 0,
-      lng: 0,
-      address: '',
-      radius: 0,
-    })
-  }
+    setSearchQuery('');
+    setSearchResults([]);
+    setSelectedLocation(null);
+    onLocationSelect({ lat: 0, lng: 0, address: '', radius: 0 });
+  };
 
-  const radiusOptions = [1, 5, 10, 25, 50, 100]
+  const radiusOptions = [1, 5, 10, 25, 50, 100];
 
   return (
-    <div className={`space-y-4 ${className}`}>
+    <div className={`space-y-3 ${className}`}>
       {/* Search Input */}
       <div className="relative">
         <div className="relative">
-          <Input
-            placeholder="Search for a city, address, or area in Nigeria..."
+          <input
+            type="text"
+            placeholder="Search city, address, or area in Nigeria..."
             value={searchQuery}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => handleSearchChange(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             disabled={isSearching}
+            className="w-full px-4 py-2 pl-10 pr-20 bg-[#F4FDFF]/5 border border-[#F4FDFF]/15 rounded-xl text-[#F4FDFF] placeholder-[#F4FDFF]/30 focus:outline-none focus:ring-2 focus:ring-[#F4FDFF]/20"
           />
-          <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-            <Search size={20} className="text-gray-400" />
-          </div>
-        </div>
-        
-        {searchQuery && (
-          <button
-            onClick={clearSearch}
-            className="absolute right-10 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-          >
-            <X size={20} />
-          </button>
-        )}
-        <Button
-          type="button"
-          variant="outline"
-          onClick={getCurrentLocation}
-          isLoading={isSearching}
-          disabled={isSearching}
-          className="absolute right-2 top-1/2 transform -translate-y-1/2"
-        >
-          <Navigation size={20} />
-        </Button>
-      </div>
-
-      {/* Search Results */}
-      {searchResults.length > 0 && (
-        <div className="absolute z-10 w-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200 max-h-60 overflow-y-auto">
-          {searchResults.map((result, index) => (
+          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#F4FDFF]/30" />
+          {searchQuery && (
             <button
-              key={index}
-              onClick={() => handleLocationSelect(result)}
-              className="w-full text-left p-3 hover:bg-gray-50 border-b border-gray-100 last:border-b-0"
+              onClick={clearSearch}
+              className="absolute right-14 top-1/2 -translate-y-1/2 text-[#F4FDFF]/30 hover:text-[#F4FDFF]"
             >
-              <div className="flex items-start">
-                <MapPin size={16} className="text-gray-400 mt-0.5 mr-2 flex-shrink-0" />
-                <div>
-                  <div className="font-medium text-gray-900">{result.display_name}</div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    {result.lat}, {result.lon}
+              <X size={16} />
+            </button>
+          )}
+          <button
+            onClick={getCurrentLocation}
+            disabled={isSearching}
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-[#F4FDFF]/10 rounded-lg hover:bg-[#F4FDFF]/20 transition-colors disabled:opacity-50"
+          >
+            <Navigation size={18} className="text-[#F4FDFF]" />
+          </button>
+        </div>
+
+        {/* Results dropdown */}
+        {searchResults.length > 0 && (
+          <div className="absolute z-20 w-full mt-1 bg-[#1C448E] border border-[#F4FDFF]/15 rounded-xl shadow-2xl max-h-60 overflow-y-auto">
+            {searchResults.map((result, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleResultClick(result)}
+                className="w-full text-left px-4 py-3 hover:bg-[#F4FDFF]/5 border-b border-[#F4FDFF]/10 last:border-0"
+              >
+                <div className="flex items-start gap-2">
+                  <MapPin size={16} className="text-[#F4FDFF]/40 mt-0.5" />
+                  <div>
+                    <div className="text-[#F4FDFF] text-sm">{result.display_name}</div>
+                    <div className="text-[#F4FDFF]/40 text-xs">
+                      {result.lat}, {result.lon}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* Recent Searches */}
-      {!searchQuery && recentSearches.length > 0 && searchResults.length === 0 && (
-        <div className="space-y-2">
-          <div className="text-sm font-medium text-gray-700">Recent Searches:</div>
-          <div className="flex flex-wrap gap-2">
-            {recentSearches.map((search, index) => (
-              <button
-                key={index}
-                onClick={() => handleSearchChange(search)}
-                className="inline-flex items-center px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-sm"
-              >
-                <Search size={12} className="mr-1.5" />
-                {search}
               </button>
             ))}
           </div>
+        )}
+      </div>
+
+      {/* Recent Searches */}
+      {!searchQuery && recentSearches.length > 0 && searchResults.length === 0 && (
+        <div className="flex flex-wrap gap-2">
+          <span className="text-sm text-[#F4FDFF]/40 mr-1">Recent:</span>
+          {recentSearches.map((s, i) => (
+            <button
+              key={i}
+              onClick={() => handleSearchChange(s)}
+              className="text-xs px-3 py-1 bg-[#F4FDFF]/10 rounded-full text-[#F4FDFF]/60 hover:bg-[#F4FDFF]/20 hover:text-[#F4FDFF] transition-colors"
+            >
+              {s}
+            </button>
+          ))}
         </div>
       )}
 
@@ -287,112 +227,61 @@ const GeoSearch: React.FC<GeoSearchProps> = ({
       {showRadiusControl && selectedLocation && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-700">Search Radius:</span>
-            <span className="text-sm text-gray-600">{radius} km</span>
+            <span className="text-sm text-[#F4FDFF]/60">Radius: {radius} km</span>
           </div>
-          <div className="space-y-3">
-            <input
-              type="range"
-              min="1"
-              max="100"
-              value={radius}
-              onChange={(e) => {
-                const newRadius = parseInt(e.target.value)
-                setRadius(newRadius)
-                onRadiusChange?.(newRadius)
-                onLocationSelect({
-                  ...selectedLocation,
-                  radius: newRadius,
-                })
-              }}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-            />
-            <div className="flex justify-between">
-              {radiusOptions.map((option) => (
-                <button
-                  key={option}
-                  onClick={() => {
-                    setRadius(option)
-                    onRadiusChange?.(option)
-                    onLocationSelect({
-                      ...selectedLocation,
-                      radius: option,
-                    })
-                  }}
-                  className={`text-xs px-2 py-1 rounded ${
-                    radius === option
-                      ? 'bg-blue-100 text-blue-700 font-medium'
-                      : 'text-gray-500 hover:text-gray-700'
-                  }`}
-                >
-                  {option} km
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Map Toggle */}
-      <div className="flex items-center justify-between">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => setShowMap(!showMap)}
-          className="flex items-center"
-        >
-          <MapPin size={16} className="mr-2" />
-          {showMap ? 'Hide Map' : 'Show on Map'}
-        </Button>
-        
-        {selectedLocation && (
-          <div className="text-sm text-gray-600">
-            <span className="font-medium">Selected:</span> {selectedLocation.address}
-          </div>
-        )}
-      </div>
-
-      {/* Map Container */}
-      {showMap && (
-        <div className="border rounded-lg overflow-hidden">
-          <LocationPicker
-            onLocationSelect={handleMapLocationSelect}
-            initialLocation={selectedLocation || undefined}
-            zoom={selectedLocation ? 14 : 10}
-            className="p-4"
+          <input
+            type="range"
+            min="1"
+            max="100"
+            value={radius}
+            onChange={(e) => {
+              const val = Number(e.target.value);
+              setRadius(val);
+              onRadiusChange?.(val);
+              if (selectedLocation) {
+                onLocationSelect({ ...selectedLocation, radius: val });
+              }
+            }}
+            className="w-full h-1 bg-[#F4FDFF]/20 rounded-lg appearance-none cursor-pointer"
           />
-        </div>
-      )}
-
-      {/* Selected Location Info */}
-      {selectedLocation && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-start">
-            <Target size={20} className="text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
-            <div>
-              <h4 className="font-medium text-blue-900 mb-1">Search Area</h4>
-              <p className="text-blue-800">{selectedLocation.address}</p>
-              <div className="flex items-center mt-2 text-sm text-blue-700">
-                <span className="mr-4">
-                  Coordinates: {selectedLocation.lat.toFixed(6)}, {selectedLocation.lng.toFixed(6)}
-                </span>
-                {showRadiusControl && (
-                  <span>
-                    Radius: {radius} km
-                  </span>
-                )}
-              </div>
-            </div>
+          <div className="flex justify-between">
+            {radiusOptions.map((opt) => (
+              <button
+                key={opt}
+                onClick={() => {
+                  setRadius(opt);
+                  onRadiusChange?.(opt);
+                  if (selectedLocation) {
+                    onLocationSelect({ ...selectedLocation, radius: opt });
+                  }
+                }}
+                className={`text-xs px-2 py-0.5 rounded ${
+                  radius === opt
+                    ? 'bg-[#F4FDFF]/20 text-[#F4FDFF]'
+                    : 'text-[#F4FDFF]/40 hover:text-[#F4FDFF]'
+                }`}
+              >
+                {opt}
+              </button>
+            ))}
           </div>
         </div>
       )}
 
-      {/* Instructions */}
-      <div className="text-sm text-gray-600">
-        <p>💡 <strong>How to use:</strong> Type an address, use current location, or click "Show on Map" to select a location manually.</p>
-      </div>
+      {/* Selected location info */}
+      {selectedLocation && (
+        <div className="bg-[#F4FDFF]/5 border border-[#F4FDFF]/15 rounded-xl p-3 flex items-start gap-3">
+          <Target size={18} className="text-[#F4FDFF]/40 mt-0.5" />
+          <div>
+            <div className="text-sm text-[#F4FDFF]/80">{selectedLocation.address}</div>
+            <div className="text-xs text-[#F4FDFF]/40">
+              {selectedLocation.lat.toFixed(5)}, {selectedLocation.lng.toFixed(5)}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  )
-}
+  );
+};
 
-export default GeoSearch
+export default GeoSearch;
