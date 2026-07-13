@@ -43,11 +43,12 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
   zoom = 13,
   className = '',
 }) => {
+  // Default to Abuja, Nigeria
   const [location, setLocation] = useState<Location>(
     initialLocation || {
-      lat: 51.505,
-      lng: -0.09,
-      address: 'London, UK',
+      lat: 9.0765,
+      lng: 7.3986,
+      address: 'Lagos, Nigeria',
     }
   )
   const [isGeolocating, setIsGeolocating] = useState(false)
@@ -126,8 +127,9 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
     if (!query.trim()) return
 
     try {
+      // Restrict search results to Nigeria
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5`
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&countrycodes=ng`
       )
       const data = await response.json()
 
@@ -199,7 +201,7 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
         <div className="flex-grow relative">
           <input
             type="text"
-            placeholder="Search for a location..."
+            placeholder="Search for a location in Nigeria..."
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             value={location.address}
             onChange={(e) => setLocation(prev => ({ ...prev, address: e.target.value }))}

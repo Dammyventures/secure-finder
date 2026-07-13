@@ -36,7 +36,7 @@ interface ItemMapProps {
 
 const ItemMap: React.FC<ItemMapProps> = ({
   items,
-  center = [51.505, -0.09],
+  center = [9.0765, 7.3986], // Abuja, Nigeria
   zoom = 13,
   onItemClick,
   showFilters = true,

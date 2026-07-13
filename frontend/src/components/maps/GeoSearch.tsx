@@ -68,8 +68,9 @@ const GeoSearch: React.FC<GeoSearchProps> = ({
 
     setIsSearching(true)
     try {
+      // Restrict results to Nigeria
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&addressdetails=1`
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&addressdetails=1&countrycodes=ng`
       )
       const data = await response.json()
       setSearchResults(data)
@@ -210,7 +211,7 @@ const GeoSearch: React.FC<GeoSearchProps> = ({
       <div className="relative">
         <div className="relative">
           <Input
-            placeholder="Search for a city, address, or area..."
+            placeholder="Search for a city, address, or area in Nigeria..."
             value={searchQuery}
             onChange={(e: ChangeEvent<HTMLInputElement>) => handleSearchChange(e.target.value)}
             disabled={isSearching}
