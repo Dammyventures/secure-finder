@@ -12,7 +12,6 @@ import {
   Float,
   Stars,
   Sparkles as ThreeSparkles,
-  TorusKnot,
   Points,
   PointMaterial,
   Ring
@@ -29,19 +28,24 @@ import {
   Zap,
   Sparkles,
   ArrowRight,
-  Crown
+  Crown,
+  FileCheck,
+  FileX
 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 
 import Button from '../../components/common/UI/Button'
-import DocumentUpload from '../../components/verification/DocumentUpload'
+// ✅ Import the VideoVerification component (if it exists)
 import VideoVerification from '../../components/verification/VideoVerification'
 import VerificationStatus from '../../components/verification/VerificationStatus'
 import { useAuth } from '../../contexts/AuthContext'
 import { authApi } from '../../api/auth.api'
 import socketService from '../../api/socket.api'
 
-// ---------- 3D Background (proper implementations) ----------
+// ============================================
+// 3D Background Components (restored from original)
+// ============================================
+
 const VerificationParticleGalaxy: React.FC = () => {
   const pointsRef = useRef<any>(null)
   const galaxyRef = useRef<any>(null)
@@ -142,7 +146,10 @@ const FluidAuraBackground: React.FC = () => {
   )
 }
 
-// ---------- Validation Schemas ----------
+// ============================================
+// Validation Schemas
+// ============================================
+
 const personalInfoSchema = yup.object({
   fullName: yup.string().required('Full name required').min(2).max(100),
   dateOfBirth: yup.date().required('Date of birth required').max(new Date(), 'Date cannot be in the future'),
@@ -156,7 +163,7 @@ const personalInfoSchema = yup.object({
 const documentSchema = yup.object({
   identityType: yup
     .string()
-    .oneOf(['passport', 'driving_license', 'national_id'] as const)
+    .oneOf(['passport', 'national_id']) // ✅ Removed driving_license
     .required('Please select an identity type'),
 })
 
@@ -165,7 +172,6 @@ type VerificationStep =
   | 'personal_info'
   | 'document_select'
   | 'document_upload'
-  | 'selfie_upload'
   | 'video_verification'
   | 'processing'
   | 'success'
@@ -182,22 +188,30 @@ interface PersonalInfoData {
 }
 
 interface DocumentData {
-  identityType: 'passport' | 'driving_license' | 'national_id'
+  identityType: 'passport' | 'national_id'
 }
 
-// ---------- MAIN COMPONENT ----------
+// ============================================
+// Main Component
+// ============================================
+
 const IdentityVerify: React.FC = () => {
   const navigate = useNavigate()
   const { user, refreshUser } = useAuth()
 
   const [currentStep, setCurrentStep] = useState<VerificationStep>('welcome')
   const [verificationId, setVerificationId] = useState<string>('')
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([])
   const [verificationStatus, setVerificationStatus] = useState<any>({
     status: 'pending',
     score: 0,
   })
   const [isLoading, setIsLoading] = useState(false)
+
+  // ---------- Document upload state ----------
+  const [frontFile, setFrontFile] = useState<File | null>(null)
+  const [backFile, setBackFile] = useState<File | null>(null)
+  const [selfieFile, setSelfieFile] = useState<File | null>(null)
+  const [uploadProgress, setUploadProgress] = useState<number>(0)
 
   // Forms
   const {
@@ -269,7 +283,6 @@ const IdentityVerify: React.FC = () => {
   const submitPersonalInfo: SubmitHandler<PersonalInfoData> = async (data) => {
     try {
       setIsLoading(true)
-      // Save personal info (could be stored in context or backend)
       console.log('Personal info:', data)
       setCurrentStep('document_select')
     } catch (error) {
@@ -280,48 +293,77 @@ const IdentityVerify: React.FC = () => {
   }
 
   const submitDocumentType: SubmitHandler<DocumentData> = async (data) => {
+    // Reset file states when document type changes
+    setFrontFile(null)
+    setBackFile(null)
+    setSelfieFile(null)
     setCurrentStep('document_upload')
   }
 
-  const handleDocumentUpload = async (files: File[], type: 'front' | 'back' | 'selfie') => {
+  // ---------- Handle file selection ----------
+  const handleFileSelect = (file: File, type: 'front' | 'back' | 'selfie') => {
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size must be less than 5MB')
+      return
+    }
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file')
+      return
+    }
+    if (type === 'front') setFrontFile(file)
+    else if (type === 'back') setBackFile(file)
+    else if (type === 'selfie') setSelfieFile(file)
+  }
+
+  const removeFile = (type: 'front' | 'back' | 'selfie') => {
+    if (type === 'front') setFrontFile(null)
+    else if (type === 'back') setBackFile(null)
+    else if (type === 'selfie') setSelfieFile(null)
+  }
+
+  // ---------- Submit documents ----------
+  const handleSubmitDocuments = async () => {
+    if (!frontFile) {
+      toast.error('Please upload the front side of your document')
+      return
+    }
+    const needsBack = selectedDocumentType === 'national_id'
+    if (needsBack && !backFile) {
+      toast.error('Please upload the back side of your national ID')
+      return
+    }
+    if (!selfieFile) {
+      toast.error('Please upload a selfie with your document')
+      return
+    }
+
     try {
       setIsLoading(true)
-      // In real app, you would upload files to backend and get URLs
-      setUploadedFiles(prev => [...prev, ...files])
-
-      // Simulate processing
-      await new Promise(resolve => setTimeout(resolve, 1000))
-
-      // After front upload, if back missing, ask for back
-      const frontUploaded = uploadedFiles.some(f => f.name.includes('front'))
-      const backUploaded = uploadedFiles.some(f => f.name.includes('back'))
-      const selfieUploaded = uploadedFiles.some(f => f.name.includes('selfie'))
-
-      if (type === 'front' && !backUploaded) {
-        toast('Please upload the back side of your document')
-      } else if (type === 'back' && !selfieUploaded) {
-        toast('Please upload a selfie with your document')
-        setCurrentStep('selfie_upload')
-      } else if (type === 'selfie') {
-        toast.success('All documents uploaded!')
-        // Decide if video verification needed
-        const needsVideo = Math.random() > 0.7
-        if (needsVideo) {
-          setCurrentStep('video_verification')
-        } else {
-          setCurrentStep('processing')
-          simulateProcessing()
-        }
+      setUploadProgress(10)
+      // Simulate upload progress (replace with actual API call)
+      for (let i = 0; i <= 100; i += 20) {
+        await new Promise(resolve => setTimeout(resolve, 300))
+        setUploadProgress(i)
       }
-    } catch (error) {
-      toast.error('Failed to upload document')
+      toast.success('Documents uploaded successfully!')
+
+      // Decide next step (video verification optional)
+      const needsVideo = Math.random() > 0.7
+      if (needsVideo) {
+        setCurrentStep('video_verification')
+      } else {
+        setCurrentStep('processing')
+        simulateProcessing()
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to upload documents')
     } finally {
       setIsLoading(false)
+      setUploadProgress(0)
     }
   }
 
   const simulateProcessing = () => {
-    // Simulate processing steps (replace with real polling or socket)
     setTimeout(() => {
       setVerificationStatus({
         status: 'processing',
@@ -352,15 +394,14 @@ const IdentityVerify: React.FC = () => {
 
   // Step configuration for UI
   const steps: Record<VerificationStep, { title: string; subtitle: string; stepNumber: number; totalSteps: number }> = {
-    welcome: { title: 'Identity Verification', subtitle: 'Secure your account and unlock all features', stepNumber: 1, totalSteps: 8 },
-    personal_info: { title: 'Personal Information', subtitle: 'Please provide your personal details', stepNumber: 2, totalSteps: 8 },
-    document_select: { title: 'Document Type', subtitle: 'Select your identity document type', stepNumber: 3, totalSteps: 8 },
-    document_upload: { title: 'Document Upload', subtitle: 'Upload photos of your identity document', stepNumber: 4, totalSteps: 8 },
-    selfie_upload: { title: 'Selfie Verification', subtitle: 'Take a selfie with your document', stepNumber: 5, totalSteps: 8 },
-    video_verification: { title: 'Video Verification', subtitle: 'Optional video call for enhanced security', stepNumber: 6, totalSteps: 8 },
-    processing: { title: 'Processing', subtitle: 'We are verifying your identity', stepNumber: 7, totalSteps: 8 },
-    success: { title: 'Verified!', subtitle: 'Your identity has been successfully verified', stepNumber: 8, totalSteps: 8 },
-    failed: { title: 'Verification Failed', subtitle: 'We could not verify your identity', stepNumber: 8, totalSteps: 8 },
+    welcome: { title: 'Identity Verification', subtitle: 'Secure your account and unlock all features', stepNumber: 1, totalSteps: 7 },
+    personal_info: { title: 'Personal Information', subtitle: 'Please provide your personal details', stepNumber: 2, totalSteps: 7 },
+    document_select: { title: 'Document Type', subtitle: 'Select your identity document type', stepNumber: 3, totalSteps: 7 },
+    document_upload: { title: 'Document Upload', subtitle: 'Upload photos of your identity document', stepNumber: 4, totalSteps: 7 },
+    video_verification: { title: 'Video Verification', subtitle: 'Optional video call for enhanced security', stepNumber: 5, totalSteps: 7 },
+    processing: { title: 'Processing', subtitle: 'We are verifying your identity', stepNumber: 6, totalSteps: 7 },
+    success: { title: 'Verified!', subtitle: 'Your identity has been successfully verified', stepNumber: 7, totalSteps: 7 },
+    failed: { title: 'Verification Failed', subtitle: 'We could not verify your identity', stepNumber: 7, totalSteps: 7 },
   }
 
   const currentStepConfig = steps[currentStep]
@@ -375,9 +416,8 @@ const IdentityVerify: React.FC = () => {
   ]
 
   const documentTypes = [
-    { id: 'passport', name: 'Passport', description: 'International passport', icon: '🛂', requirements: ['Clear photo of passport data page', 'All text must be readable'] },
-    { id: 'driving_license', name: "Driver's License", description: 'Government-issued driver license', icon: '🚗', requirements: ['Front and back photos', 'Must not be expired'] },
-    { id: 'national_id', name: 'National ID Card', description: 'National identification card', icon: '🪪', requirements: ['Front and back photos', 'All corners visible'] },
+    { id: 'passport', name: 'Passport', description: 'International passport', icon: '🛂', requirements: ['Clear photo of passport data page', 'All text must be readable'], needsBack: false },
+    { id: 'national_id', name: 'National ID Card', description: 'National identification card', icon: '🪪', requirements: ['Front and back photos', 'All corners visible'], needsBack: true },
   ]
 
   return (
@@ -485,7 +525,7 @@ const IdentityVerify: React.FC = () => {
                   <div><label className="block text-sm font-medium text-[#F4FDFF]/70 mb-2">Full Name *</label><input type="text" {...registerPersonalInfo('fullName')} className="w-full px-4 py-3 bg-[#F4FDFF]/5 border border-[#F4FDFF]/15 rounded-xl text-[#F4FDFF] placeholder-[#F4FDFF]/20 focus:border-[#F4FDFF] focus:ring-2 focus:ring-[#F4FDFF]/20 transition-all outline-none" placeholder="John Doe" />{personalInfoErrors.fullName && <p className="text-[#938BA1] text-xs mt-1">{personalInfoErrors.fullName.message}</p>}</div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div><label className="block text-sm font-medium text-[#F4FDFF]/70 mb-2">Date of Birth *</label><input type="date" {...registerPersonalInfo('dateOfBirth')} className="w-full px-4 py-3 bg-[#F4FDFF]/5 border border-[#F4FDFF]/15 rounded-xl text-[#F4FDFF] focus:border-[#F4FDFF] focus:ring-2 focus:ring-[#F4FDFF]/20 transition-all outline-none" />{personalInfoErrors.dateOfBirth && <p className="text-[#938BA1] text-xs mt-1">{personalInfoErrors.dateOfBirth.message}</p>}</div>
-                    <div><label className="block text-sm font-medium text-[#F4FDFF]/70 mb-2">Nationality *</label><input type="text" {...registerPersonalInfo('nationality')} className="w-full px-4 py-3 bg-[#F4FDFF]/5 border border-[#F4FDFF]/15 rounded-xl text-[#F4FDFF] placeholder-[#F4FDFF]/20 focus:border-[#F4FDFF] focus:ring-2 focus:ring-[#F4FDFF]/20 transition-all outline-none" placeholder="e.g., American" />{personalInfoErrors.nationality && <p className="text-[#938BA1] text-xs mt-1">{personalInfoErrors.nationality.message}</p>}</div>
+                    <div><label className="block text-sm font-medium text-[#F4FDFF]/70 mb-2">Nationality *</label><input type="text" {...registerPersonalInfo('nationality')} className="w-full px-4 py-3 bg-[#F4FDFF]/5 border border-[#F4FDFF]/15 rounded-xl text-[#F4FDFF] placeholder-[#F4FDFF]/20 focus:border-[#F4FDFF] focus:ring-2 focus:ring-[#F4FDFF]/20 transition-all outline-none" placeholder="e.g., Nigerian" />{personalInfoErrors.nationality && <p className="text-[#938BA1] text-xs mt-1">{personalInfoErrors.nationality.message}</p>}</div>
                   </div>
                   <div><label className="block text-sm font-medium text-[#F4FDFF]/70 mb-2">Address *</label><input type="text" {...registerPersonalInfo('address')} className="w-full px-4 py-3 bg-[#F4FDFF]/5 border border-[#F4FDFF]/15 rounded-xl text-[#F4FDFF] placeholder-[#F4FDFF]/20 focus:border-[#F4FDFF] focus:ring-2 focus:ring-[#F4FDFF]/20 transition-all outline-none" placeholder="Street address" />{personalInfoErrors.address && <p className="text-[#938BA1] text-xs mt-1">{personalInfoErrors.address.message}</p>}</div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -532,28 +572,128 @@ const IdentityVerify: React.FC = () => {
           {/* DOCUMENT UPLOAD */}
           {currentStep === 'document_upload' && (
             <div className="max-w-3xl mx-auto">
-              <DocumentUpload
-                documentType={selectedDocumentType}
-                onUpload={(file: File) => handleDocumentUpload([file], 'front')}
-                description={`Please upload a clear photo of your ${selectedDocumentType}`}
-                onRemove={() => { /* optional */ }}
-              />
-              <div className="mt-6 flex justify-between">
-                <Button variant="outline" onClick={() => setCurrentStep('document_select')} className="border-[#F4FDFF]/20 text-[#F4FDFF] hover:bg-[#F4FDFF]/10">Back</Button>
-              </div>
-            </div>
-          )}
-
-          {/* SELFIE UPLOAD */}
-          {currentStep === 'selfie_upload' && (
-            <div className="max-w-2xl mx-auto">
               <div className="bg-[#F4FDFF]/5 backdrop-blur-2xl rounded-3xl p-8 border border-[#F4FDFF]/10">
-                <div className="text-center mb-8"><div className="w-24 h-24 bg-gradient-to-r from-[#1C448E]/20 to-[#938BA1]/20 rounded-full flex items-center justify-center mx-auto mb-4"><Camera className="h-12 w-12 text-[#F4FDFF]" /></div><h2 className="text-2xl font-bold text-[#F4FDFF] mb-2">Take a Selfie</h2><p className="text-[#F4FDFF]/50 text-sm">Please take a clear selfie while holding your document next to your face.</p></div>
-                <div className="bg-[#938BA1]/10 border border-[#938BA1]/20 rounded-xl p-4 mb-6"><div className="flex items-start gap-3"><AlertCircle className="h-5 w-5 text-[#938BA1] mt-0.5" /><div><h4 className="font-medium text-[#F4FDFF] mb-2">Important Guidelines</h4><ul className="text-sm text-[#F4FDFF]/50 space-y-1"><li>• Hold your document next to your face</li><li>• Make sure your face and document are clearly visible</li><li>• Good lighting is essential</li><li>• No filters or editing</li></ul></div></div></div>
-                <div className="border-2 border-dashed border-[#F4FDFF]/20 rounded-xl p-8 text-center mb-6"><div className="w-16 h-16 bg-[#F4FDFF]/5 rounded-full flex items-center justify-center mx-auto mb-4"><Upload className="h-8 w-8 text-[#F4FDFF]/30" /></div><p className="text-[#F4FDFF]/50 mb-2">Drag and drop your selfie here, or click to select</p><p className="text-sm text-[#F4FDFF]/30 mb-4">JPEG, PNG up to 5MB</p><Button onClick={() => handleDocumentUpload([new File([''], 'selfie.jpg', {type:'image/jpeg'})], 'selfie')} variant="outline" isLoading={isLoading} className="border-[#F4FDFF]/20 text-[#F4FDFF] hover:bg-[#F4FDFF]/10"><Camera className="h-4 w-4 mr-2" />Take Selfie or Upload</Button></div>
+                <h2 className="text-xl font-bold text-[#F4FDFF] mb-2">Upload Your Documents</h2>
+                <p className="text-[#F4FDFF]/40 text-sm mb-6">Please upload clear photos of your {selectedDocumentType}. All images must be JPEG or PNG, max 5MB each.</p>
+
+                {/* Front upload */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-[#F4FDFF]/70 mb-2">Front Side *</label>
+                  {frontFile ? (
+                    <div className="flex items-center justify-between p-4 bg-[#F4FDFF]/5 rounded-xl border border-[#F4FDFF]/20">
+                      <div className="flex items-center gap-3">
+                        <FileCheck className="h-6 w-6 text-[#938BA1]" />
+                        <span className="text-[#F4FDFF]">{frontFile.name}</span>
+                        <span className="text-xs text-[#F4FDFF]/30">{(frontFile.size / 1024).toFixed(1)} KB</span>
+                      </div>
+                      <button onClick={() => removeFile('front')} className="text-[#938BA1] hover:text-[#F4FDFF] transition-colors"><FileX className="h-5 w-5" /></button>
+                    </div>
+                  ) : (
+                    <div className="border-2 border-dashed border-[#F4FDFF]/20 rounded-xl p-6 text-center hover:border-[#F4FDFF]/40 transition-all">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          if (e.target.files?.[0]) handleFileSelect(e.target.files[0], 'front')
+                          e.target.value = ''
+                        }}
+                        className="hidden"
+                        id="front-upload"
+                      />
+                      <label htmlFor="front-upload" className="cursor-pointer flex flex-col items-center">
+                        <Upload className="h-8 w-8 text-[#F4FDFF]/30 mb-2" />
+                        <span className="text-[#F4FDFF]/50">Click or drag to upload front side</span>
+                      </label>
+                    </div>
+                  )}
+                </div>
+
+                {/* Back upload (only if required) */}
+                {selectedDocumentType === 'national_id' && (
+                  <div className="mb-6">
+                    <label className="block text-sm font-medium text-[#F4FDFF]/70 mb-2">Back Side *</label>
+                    {backFile ? (
+                      <div className="flex items-center justify-between p-4 bg-[#F4FDFF]/5 rounded-xl border border-[#F4FDFF]/20">
+                        <div className="flex items-center gap-3">
+                          <FileCheck className="h-6 w-6 text-[#938BA1]" />
+                          <span className="text-[#F4FDFF]">{backFile.name}</span>
+                          <span className="text-xs text-[#F4FDFF]/30">{(backFile.size / 1024).toFixed(1)} KB</span>
+                        </div>
+                        <button onClick={() => removeFile('back')} className="text-[#938BA1] hover:text-[#F4FDFF] transition-colors"><FileX className="h-5 w-5" /></button>
+                      </div>
+                    ) : (
+                      <div className="border-2 border-dashed border-[#F4FDFF]/20 rounded-xl p-6 text-center hover:border-[#F4FDFF]/40 transition-all">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            if (e.target.files?.[0]) handleFileSelect(e.target.files[0], 'back')
+                            e.target.value = ''
+                          }}
+                          className="hidden"
+                          id="back-upload"
+                        />
+                        <label htmlFor="back-upload" className="cursor-pointer flex flex-col items-center">
+                          <Upload className="h-8 w-8 text-[#F4FDFF]/30 mb-2" />
+                          <span className="text-[#F4FDFF]/50">Click or drag to upload back side</span>
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Selfie upload */}
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-[#F4FDFF]/70 mb-2">Selfie with Document *</label>
+                  {selfieFile ? (
+                    <div className="flex items-center justify-between p-4 bg-[#F4FDFF]/5 rounded-xl border border-[#F4FDFF]/20">
+                      <div className="flex items-center gap-3">
+                        <FileCheck className="h-6 w-6 text-[#938BA1]" />
+                        <span className="text-[#F4FDFF]">{selfieFile.name}</span>
+                        <span className="text-xs text-[#F4FDFF]/30">{(selfieFile.size / 1024).toFixed(1)} KB</span>
+                      </div>
+                      <button onClick={() => removeFile('selfie')} className="text-[#938BA1] hover:text-[#F4FDFF] transition-colors"><FileX className="h-5 w-5" /></button>
+                    </div>
+                  ) : (
+                    <div className="border-2 border-dashed border-[#F4FDFF]/20 rounded-xl p-6 text-center hover:border-[#F4FDFF]/40 transition-all">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          if (e.target.files?.[0]) handleFileSelect(e.target.files[0], 'selfie')
+                          e.target.value = ''
+                        }}
+                        className="hidden"
+                        id="selfie-upload"
+                      />
+                      <label htmlFor="selfie-upload" className="cursor-pointer flex flex-col items-center">
+                        <Camera className="h-8 w-8 text-[#F4FDFF]/30 mb-2" />
+                        <span className="text-[#F4FDFF]/50">Take a selfie holding your document</span>
+                      </label>
+                    </div>
+                  )}
+                </div>
+
+                {/* Upload progress */}
+                {uploadProgress > 0 && uploadProgress < 100 && (
+                  <div className="mb-6">
+                    <div className="h-2 bg-[#F4FDFF]/10 rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] rounded-full transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+                    </div>
+                    <p className="text-xs text-[#F4FDFF]/30 text-center mt-1">Uploading... {uploadProgress}%</p>
+                  </div>
+                )}
+
                 <div className="flex justify-between">
-                  <Button variant="outline" onClick={() => setCurrentStep('document_upload')} className="border-[#F4FDFF]/20 text-[#F4FDFF] hover:bg-[#F4FDFF]/10">Back</Button>
-                  <Button onClick={() => setCurrentStep('video_verification')} className="bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] text-[#1C448E] hover:shadow-lg hover:shadow-[#938BA1]/20">Continue <ArrowRight className="ml-2 h-4 w-4" /></Button>
+                  <Button variant="outline" onClick={() => setCurrentStep('document_select')} className="border-[#F4FDFF]/20 text-[#F4FDFF] hover:bg-[#F4FDFF]/10">Back</Button>
+                  <Button
+                    onClick={handleSubmitDocuments}
+                    isLoading={isLoading}
+                    disabled={isLoading || !frontFile || !selfieFile || (selectedDocumentType === 'national_id' && !backFile)}
+                    className="bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] text-[#1C448E] hover:shadow-lg hover:shadow-[#938BA1]/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isLoading ? 'Uploading...' : 'Submit Documents'} <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             </div>
@@ -565,9 +705,9 @@ const IdentityVerify: React.FC = () => {
               <VideoVerification
                 verificationId={verificationId}
                 onComplete={() => { toast.success('Video verification completed!'); setCurrentStep('processing'); simulateProcessing(); }}
-                onCancel={() => setCurrentStep('selfie_upload')}
+                onCancel={() => setCurrentStep('document_upload')}
               />
-              <div className="mt-6"><Button variant="outline" onClick={() => setCurrentStep('selfie_upload')} className="w-full border-[#F4FDFF]/20 text-[#F4FDFF] hover:bg-[#F4FDFF]/10">← Back to Selfie Upload</Button></div>
+              <div className="mt-6"><Button variant="outline" onClick={() => setCurrentStep('document_upload')} className="w-full border-[#F4FDFF]/20 text-[#F4FDFF] hover:bg-[#F4FDFF]/10">← Back to Upload</Button></div>
             </div>
           )}
 
