@@ -35,7 +35,6 @@ import {
 import { toast } from 'react-hot-toast'
 
 import Button from '../../components/common/UI/Button'
-// ✅ Import the VideoVerification component (if it exists)
 import VideoVerification from '../../components/verification/VideoVerification'
 import VerificationStatus from '../../components/verification/VerificationStatus'
 import { useAuth } from '../../contexts/AuthContext'
@@ -43,7 +42,7 @@ import { authApi } from '../../api/auth.api'
 import socketService from '../../api/socket.api'
 
 // ============================================
-// 3D Background Components (restored from original)
+// 3D Background Components (unchanged)
 // ============================================
 
 const VerificationParticleGalaxy: React.FC = () => {
@@ -207,7 +206,7 @@ const IdentityVerify: React.FC = () => {
   })
   const [isLoading, setIsLoading] = useState(false)
 
-  // ---------- Document upload state ----------
+  // Document upload state
   const [frontFile, setFrontFile] = useState<File | null>(null)
   const [backFile, setBackFile] = useState<File | null>(null)
   const [selfieFile, setSelfieFile] = useState<File | null>(null)
@@ -252,10 +251,14 @@ const IdentityVerify: React.FC = () => {
           estimatedTime: data.estimatedTime,
           nextStep: data.nextStep,
         })
+        // ✅ If verification succeeds, refresh user and redirect
         if (data.status === 'verified') {
           setCurrentStep('success')
           toast.success('Identity verified successfully!')
-          refreshUser()
+          // Refresh the user context before navigating
+          refreshUser().then(() => {
+            navigate('/dashboard')
+          })
         } else if (data.status === 'rejected') {
           setCurrentStep('failed')
           toast.error('Verification failed. Please try again.')
@@ -263,7 +266,7 @@ const IdentityVerify: React.FC = () => {
       }
     })
     return () => unsubscribe()
-  }, [verificationId, refreshUser])
+  }, [verificationId, refreshUser, navigate])
 
   // Step handlers
   const startVerification = async () => {
@@ -293,14 +296,13 @@ const IdentityVerify: React.FC = () => {
   }
 
   const submitDocumentType: SubmitHandler<DocumentData> = async (data) => {
-    // Reset file states when document type changes
     setFrontFile(null)
     setBackFile(null)
     setSelfieFile(null)
     setCurrentStep('document_upload')
   }
 
-  // ---------- Handle file selection ----------
+  // Handle file selection
   const handleFileSelect = (file: File, type: 'front' | 'back' | 'selfie') => {
     if (file.size > 5 * 1024 * 1024) {
       toast.error('File size must be less than 5MB')
@@ -321,7 +323,7 @@ const IdentityVerify: React.FC = () => {
     else if (type === 'selfie') setSelfieFile(null)
   }
 
-  // ---------- Submit documents ----------
+  // Submit documents
   const handleSubmitDocuments = async () => {
     if (!frontFile) {
       toast.error('Please upload the front side of your document')
@@ -363,7 +365,9 @@ const IdentityVerify: React.FC = () => {
     }
   }
 
-  const simulateProcessing = () => {
+  // Simulate processing (replace with real polling)
+  const simulateProcessing = async () => {
+    // Simulate processing steps
     setTimeout(() => {
       setVerificationStatus({
         status: 'processing',
@@ -380,7 +384,8 @@ const IdentityVerify: React.FC = () => {
         estimatedTime: '1-2 minutes',
       })
     }, 3000)
-    setTimeout(() => {
+    setTimeout(async () => {
+      // ✅ Verification success
       setVerificationStatus({
         status: 'verified',
         score: 98,
@@ -388,7 +393,9 @@ const IdentityVerify: React.FC = () => {
       })
       setCurrentStep('success')
       toast.success('Verification complete!')
-      refreshUser()
+      // ✅ Refresh user and navigate
+      await refreshUser()
+      navigate('/dashboard')
     }, 6000)
   }
 
@@ -420,6 +427,7 @@ const IdentityVerify: React.FC = () => {
     { id: 'national_id', name: 'National ID Card', description: 'National identification card', icon: '🪪', requirements: ['Front and back photos', 'All corners visible'], needsBack: true },
   ]
 
+  // ---------- RENDER (unchanged except for the logic above) ----------
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-[#1C448E] via-[#0F2A5E] to-[#1C448E] overflow-hidden">
       {/* 3D Background */}
@@ -522,6 +530,7 @@ const IdentityVerify: React.FC = () => {
               <div className="bg-[#F4FDFF]/5 backdrop-blur-2xl rounded-3xl p-8 border border-[#F4FDFF]/10">
                 <div className="mb-6"><h2 className="text-xl font-bold text-[#F4FDFF] mb-2">Personal Information</h2><p className="text-[#F4FDFF]/40 text-sm">Please provide your personal details. This must match your identity documents.</p></div>
                 <form onSubmit={handleSubmitPersonalInfo(submitPersonalInfo)} className="space-y-4">
+                  {/* Form fields – unchanged */}
                   <div><label className="block text-sm font-medium text-[#F4FDFF]/70 mb-2">Full Name *</label><input type="text" {...registerPersonalInfo('fullName')} className="w-full px-4 py-3 bg-[#F4FDFF]/5 border border-[#F4FDFF]/15 rounded-xl text-[#F4FDFF] placeholder-[#F4FDFF]/20 focus:border-[#F4FDFF] focus:ring-2 focus:ring-[#F4FDFF]/20 transition-all outline-none" placeholder="John Doe" />{personalInfoErrors.fullName && <p className="text-[#938BA1] text-xs mt-1">{personalInfoErrors.fullName.message}</p>}</div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div><label className="block text-sm font-medium text-[#F4FDFF]/70 mb-2">Date of Birth *</label><input type="date" {...registerPersonalInfo('dateOfBirth')} className="w-full px-4 py-3 bg-[#F4FDFF]/5 border border-[#F4FDFF]/15 rounded-xl text-[#F4FDFF] focus:border-[#F4FDFF] focus:ring-2 focus:ring-[#F4FDFF]/20 transition-all outline-none" />{personalInfoErrors.dateOfBirth && <p className="text-[#938BA1] text-xs mt-1">{personalInfoErrors.dateOfBirth.message}</p>}</div>
@@ -704,7 +713,11 @@ const IdentityVerify: React.FC = () => {
             <div className="max-w-3xl mx-auto">
               <VideoVerification
                 verificationId={verificationId}
-                onComplete={() => { toast.success('Video verification completed!'); setCurrentStep('processing'); simulateProcessing(); }}
+                onComplete={() => {
+                  toast.success('Video verification completed!')
+                  setCurrentStep('processing')
+                  simulateProcessing()
+                }}
                 onCancel={() => setCurrentStep('document_upload')}
               />
               <div className="mt-6"><Button variant="outline" onClick={() => setCurrentStep('document_upload')} className="w-full border-[#F4FDFF]/20 text-[#F4FDFF] hover:bg-[#F4FDFF]/10">← Back to Upload</Button></div>
@@ -726,7 +739,12 @@ const IdentityVerify: React.FC = () => {
                 <h2 className="text-2xl font-bold text-[#F4FDFF] mb-2">Identity Verified!</h2>
                 <p className="text-[#F4FDFF]/50 mb-6">Your identity has been successfully verified. You now have access to all features.</p>
                 <div className="bg-[#F4FDFF]/5 rounded-xl p-4 mb-6"><div className="flex items-center justify-center gap-2"><Shield className="h-5 w-5 text-[#938BA1]" /><span className="text-[#F4FDFF] font-medium">Verification Score: {verificationStatus.score || 100}/100</span></div></div>
-                <div className="space-y-3"><Button onClick={() => navigate('/dashboard')} size="lg" className="w-full bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] text-[#1C448E] hover:shadow-lg hover:shadow-[#938BA1]/20">Go to Dashboard <ArrowRight className="ml-2 h-4 w-4" /></Button><Button onClick={() => navigate('/report/lost')} variant="outline" className="w-full border-[#F4FDFF]/20 text-[#F4FDFF] hover:bg-[#F4FDFF]/10">Report a Lost Item</Button></div>
+                <div className="space-y-3">
+                  <Button onClick={() => navigate('/dashboard')} size="lg" className="w-full bg-gradient-to-r from-[#F4FDFF] to-[#938BA1] text-[#1C448E] hover:shadow-lg hover:shadow-[#938BA1]/20">
+                    Go to Dashboard <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                  <Button onClick={() => navigate('/report/lost')} variant="outline" className="w-full border-[#F4FDFF]/20 text-[#F4FDFF] hover:bg-[#F4FDFF]/10">Report a Lost Item</Button>
+                </div>
               </div>
             </div>
           )}
