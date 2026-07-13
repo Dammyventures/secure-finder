@@ -34,7 +34,8 @@ import {
   CheckCircle,
   Users,
   Activity,
-  X
+  X,
+  RefreshCw
 } from 'lucide-react'
 import Button from '../../components/common/UI/Button'
 import ItemCard from '../../components/items/ItemCard'
@@ -44,7 +45,7 @@ import { authApi } from '../../api/auth.api'
 import type { Item } from '../../types/item.types'
 import toast from 'react-hot-toast'
 
-// ---------- 3D Background (from original) ----------
+// ---------- 3D Background (unchanged but wrapped in a safe container) ----------
 const DashboardParticleGalaxy: React.FC = () => {
   const pointsRef = useRef<any>(null)
   const galaxyRef = useRef<any>(null)
@@ -211,43 +212,46 @@ const Dashboard: React.FC = () => {
   })
   const [recentItems, setRecentItems] = useState<Item[]>([])
   const [loading, setLoading] = useState(true)
+  const [dataError, setDataError] = useState<string | null>(null)
+  const [retryCount, setRetryCount] = useState(0)
   const [showWelcome, setShowWelcome] = useState(true)
   const [notificationCount, setNotificationCount] = useState(0)
 
-  // Fetch real data – using existing endpoints
-useEffect(() => {
-  const fetchDashboardData = async () => {
-    setLoading(true)
-    try {
-      // 1. Get user stats from profile
-      const userData = await authApi.getCurrentUser()
-      setStats({
-        itemsReported: (userData as any).itemsPosted || 0,
-        itemsClaimed: (userData as any).claimsApproved || 0,
-        activeClaims: (userData as any).claimsMade || 0,
-        rewardsEarned: (userData as any).rewardsEarned || 0,
-        verificationScore: userData.verificationScore || 0,
-        avgResolutionTime: 48,
-      })
+  // Fetch data with error handling
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      setLoading(true)
+      setDataError(null)
+      try {
+        // 1. Get user stats from profile
+        const userData = await authApi.getCurrentUser()
+        setStats({
+          itemsReported: (userData as any).itemsPosted || 0,
+          itemsClaimed: (userData as any).claimsApproved || 0,
+          activeClaims: (userData as any).claimsMade || 0,
+          rewardsEarned: (userData as any).rewardsEarned || 0,
+          verificationScore: userData.verificationScore || 0,
+          avgResolutionTime: 48,
+        })
 
-      // 2. Get recent items (limit 4)
-      const itemsRes = await itemApi.getItems({ limit: 4 })
-      setRecentItems(itemsRes.items || [])
+        // 2. Get recent items (limit 4)
+        const itemsRes = await itemApi.getItems({ limit: 4 })
+        setRecentItems(itemsRes.items || [])
 
-      // 3. Notification count placeholder
-      setNotificationCount(0)   // <-- FIXED: removed non-existent method
-
-      // 4. Refresh user (in case verification status changed)
-      await refreshUser()
-    } catch (error) {
-      console.error('Dashboard data fetch error:', error)
-      toast.error('Failed to load dashboard data')
-    } finally {
-      setLoading(false)
+        // 3. Refresh user (in case verification status changed)
+        await refreshUser()
+      } catch (error: any) {
+        console.error('Dashboard data fetch error:', error)
+        const message = error?.message || error?.error?.message || 'Failed to load dashboard data'
+        setDataError(message)
+        toast.error('Failed to load dashboard data')
+      } finally {
+        setLoading(false)
+      }
     }
-  }
-  fetchDashboardData()
-}, [user, refreshUser])
+    fetchDashboardData()
+  }, [retryCount]) // Re-fetch when retryCount changes
+
   // Welcome auto-hide
   useEffect(() => {
     const timer = setTimeout(() => setShowWelcome(false), 5000)
@@ -259,6 +263,10 @@ useEffect(() => {
     return user.identityVerified ? 'from-[#F4FDFF] to-[#938BA1]' : 'from-[#938BA1] to-[#1C448E]'
   }
 
+  // Handle retry
+  const handleRetry = () => setRetryCount(prev => prev + 1)
+
+  // ---------- Loading State ----------
   if (loading) {
     return (
       <div className="fixed inset-0 bg-gradient-to-br from-[#1C448E] via-[#0F2A5E] to-[#1C448E] flex items-center justify-center">
@@ -270,11 +278,30 @@ useEffect(() => {
     )
   }
 
+  // ---------- Error State ----------
+  if (dataError) {
+    return (
+      <div className="fixed inset-0 bg-gradient-to-br from-[#1C448E] via-[#0F2A5E] to-[#1C448E] flex flex-col items-center justify-center">
+        <AlertCircle className="w-16 h-16 text-[#938BA1] mb-4" />
+        <h2 className="text-2xl font-bold text-[#F4FDFF] mb-2">Something went wrong</h2>
+        <p className="text-[#F4FDFF]/60 text-center max-w-md mb-6">{dataError}</p>
+        <Button
+          onClick={handleRetry}
+          className="bg-[#F4FDFF] text-[#1C448E] hover:bg-[#938BA1] hover:text-white transition-colors"
+        >
+          <RefreshCw size={18} className="mr-2" />
+          Retry
+        </Button>
+      </div>
+    )
+  }
+
+  // ---------- Main Render ----------
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-[#1C448E] via-[#0F2A5E] to-[#1C448E] overflow-hidden">
-      {/* 3D Background */}
+      {/* 3D Background - wrapped with error boundary fallback */}
       <div className="fixed inset-0">
-        <Canvas camera={{ position: [0, 0, 6], fov: 55 }}>
+        <Canvas camera={{ position: [0, 0, 6], fov: 55 }} fallback={<div className="w-full h-full bg-[#1C448E]" />}>
           <ambientLight intensity={0.3} />
           <directionalLight position={[3, 5, 3]} intensity={0.8} color="#F4FDFF" />
           <pointLight position={[-3, 2, -3]} intensity={0.5} color="#938BA1" />
