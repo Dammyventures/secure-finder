@@ -39,10 +39,11 @@ import VideoVerification from '../../components/verification/VideoVerification'
 import VerificationStatus from '../../components/verification/VerificationStatus'
 import { useAuth } from '../../contexts/AuthContext'
 import { authApi } from '../../api/auth.api'
+import api from '../../api/client' // ✅ Import the API client to call the complete endpoint
 import socketService from '../../api/socket.api'
 
 // ============================================
-// 3D Background Components (unchanged)
+// 3D Background Components
 // ============================================
 
 const VerificationParticleGalaxy: React.FC = () => {
@@ -162,7 +163,7 @@ const personalInfoSchema = yup.object({
 const documentSchema = yup.object({
   identityType: yup
     .string()
-    .oneOf(['passport', 'national_id']) // ✅ Removed driving_license
+    .oneOf(['passport', 'national_id'])
     .required('Please select an identity type'),
 })
 
@@ -240,9 +241,20 @@ const IdentityVerify: React.FC = () => {
     }
   }, [user, setPersonalInfoValue])
 
+  // ✅ Function to call backend to complete verification
+  const completeVerification = async () => {
+    try {
+      const response = await api.post(`/verification/${verificationId}/complete`)
+      return response.data
+    } catch (error) {
+      console.error('Failed to complete verification:', error)
+      throw error
+    }
+  }
+
   // Listen for real-time verification status (optional)
   useEffect(() => {
-    const unsubscribe = socketService.on('verification:status', (data: any) => {
+    const unsubscribe = socketService.on('verification:status', async (data: any) => {
       if (data.verificationId === verificationId) {
         setVerificationStatus({
           status: data.status,
@@ -251,14 +263,18 @@ const IdentityVerify: React.FC = () => {
           estimatedTime: data.estimatedTime,
           nextStep: data.nextStep,
         })
-        // ✅ If verification succeeds, refresh user and redirect
         if (data.status === 'verified') {
           setCurrentStep('success')
           toast.success('Identity verified successfully!')
-          // Refresh the user context before navigating
-          refreshUser().then(() => {
+          try {
+            // ✅ Call backend to mark verification complete and update user
+            await completeVerification()
+            // ✅ Refresh user context and navigate
+            await refreshUser()
             navigate('/dashboard')
-          })
+          } catch (error) {
+            toast.error('Failed to finalize verification. Please try again.')
+          }
         } else if (data.status === 'rejected') {
           setCurrentStep('failed')
           toast.error('Verification failed. Please try again.')
@@ -385,17 +401,22 @@ const IdentityVerify: React.FC = () => {
       })
     }, 3000)
     setTimeout(async () => {
-      // ✅ Verification success
-      setVerificationStatus({
-        status: 'verified',
-        score: 98,
-        message: 'Identity verified successfully!',
-      })
-      setCurrentStep('success')
-      toast.success('Verification complete!')
-      // ✅ Refresh user and navigate
-      await refreshUser()
-      navigate('/dashboard')
+      try {
+        // ✅ Call backend to mark verification complete
+        await completeVerification()
+        setVerificationStatus({
+          status: 'verified',
+          score: 98,
+          message: 'Identity verified successfully!',
+        })
+        setCurrentStep('success')
+        toast.success('Verification complete!')
+        // ✅ Refresh user and navigate
+        await refreshUser()
+        navigate('/dashboard')
+      } catch (error) {
+        toast.error('Failed to finalize verification. Please try again.')
+      }
     }, 6000)
   }
 
@@ -427,7 +448,7 @@ const IdentityVerify: React.FC = () => {
     { id: 'national_id', name: 'National ID Card', description: 'National identification card', icon: '🪪', requirements: ['Front and back photos', 'All corners visible'], needsBack: true },
   ]
 
-  // ---------- RENDER (unchanged except for the logic above) ----------
+  // ---------- RENDER ----------
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-[#1C448E] via-[#0F2A5E] to-[#1C448E] overflow-hidden">
       {/* 3D Background */}
@@ -530,7 +551,6 @@ const IdentityVerify: React.FC = () => {
               <div className="bg-[#F4FDFF]/5 backdrop-blur-2xl rounded-3xl p-8 border border-[#F4FDFF]/10">
                 <div className="mb-6"><h2 className="text-xl font-bold text-[#F4FDFF] mb-2">Personal Information</h2><p className="text-[#F4FDFF]/40 text-sm">Please provide your personal details. This must match your identity documents.</p></div>
                 <form onSubmit={handleSubmitPersonalInfo(submitPersonalInfo)} className="space-y-4">
-                  {/* Form fields – unchanged */}
                   <div><label className="block text-sm font-medium text-[#F4FDFF]/70 mb-2">Full Name *</label><input type="text" {...registerPersonalInfo('fullName')} className="w-full px-4 py-3 bg-[#F4FDFF]/5 border border-[#F4FDFF]/15 rounded-xl text-[#F4FDFF] placeholder-[#F4FDFF]/20 focus:border-[#F4FDFF] focus:ring-2 focus:ring-[#F4FDFF]/20 transition-all outline-none" placeholder="John Doe" />{personalInfoErrors.fullName && <p className="text-[#938BA1] text-xs mt-1">{personalInfoErrors.fullName.message}</p>}</div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div><label className="block text-sm font-medium text-[#F4FDFF]/70 mb-2">Date of Birth *</label><input type="date" {...registerPersonalInfo('dateOfBirth')} className="w-full px-4 py-3 bg-[#F4FDFF]/5 border border-[#F4FDFF]/15 rounded-xl text-[#F4FDFF] focus:border-[#F4FDFF] focus:ring-2 focus:ring-[#F4FDFF]/20 transition-all outline-none" />{personalInfoErrors.dateOfBirth && <p className="text-[#938BA1] text-xs mt-1">{personalInfoErrors.dateOfBirth.message}</p>}</div>
@@ -639,9 +659,9 @@ const IdentityVerify: React.FC = () => {
                             if (e.target.files?.[0]) handleFileSelect(e.target.files[0], 'back')
                             e.target.value = ''
                           }}
-                          className="hidden"
-                          id="back-upload"
-                        />
+                        className="hidden"
+                        id="back-upload"
+                      />
                         <label htmlFor="back-upload" className="cursor-pointer flex flex-col items-center">
                           <Upload className="h-8 w-8 text-[#F4FDFF]/30 mb-2" />
                           <span className="text-[#F4FDFF]/50">Click or drag to upload back side</span>
